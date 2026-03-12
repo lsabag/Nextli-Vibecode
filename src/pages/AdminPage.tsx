@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { SEOHead } from '@/components/shared/SEOHead'
 import {
   LayoutDashboard, Users, GraduationCap, Home, Settings, Menu,
-  ChevronDown,
+  ChevronDown, ClipboardCheck,
 } from 'lucide-react'
 
 const StudentInsights = lazy(() => import('@/components/admin/StudentInsights').then(m => ({ default: m.StudentInsights })))
@@ -18,6 +18,7 @@ const WaitlistManager = lazy(() => import('@/components/admin/WaitlistManager').
 const PrepManager = lazy(() => import('@/components/admin/PrepManager').then(m => ({ default: m.PrepManager })))
 const NotesViewer = lazy(() => import('@/components/admin/NotesViewer').then(m => ({ default: m.NotesViewer })))
 const PromptShowcaseManager = lazy(() => import('@/components/admin/PromptShowcaseManager').then(m => ({ default: m.PromptShowcaseManager })))
+const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 
 // ── Navigation structure ─────────────────────────────────────────────────────
 
@@ -30,9 +31,14 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    id: 'health',
+    id: 'dashboard',
     label: 'דשבורד',
     icon: <LayoutDashboard size={18} />,
+  },
+  {
+    id: 'health',
+    label: 'לבדוק',
+    icon: <ClipboardCheck size={18} />,
   },
   {
     id: 'students',
@@ -124,6 +130,7 @@ function PrepTabWrapper() {
 
 function renderContent(activeId: string) {
   switch (activeId) {
+    case 'dashboard':   return <AdminDashboard />
     case 'health':      return <SystemHealthCheck />
     case 'waitlist':    return <WaitlistManager />
     case 'insights':    return <StudentInsights />
@@ -134,7 +141,7 @@ function renderContent(activeId: string) {
     case 'landing-content': return <LandingManager />
     case 'prompt-showcase': return <PromptShowcaseManager />
     case 'settings':    return <SettingsManager />
-    default:            return <SystemHealthCheck />
+    default:            return <AdminDashboard />
   }
 }
 
@@ -159,7 +166,7 @@ export default function AdminPage() {
       const item = navItems.find(n => n.id === tab)
       if (item?.children) return item.children[0].id
     }
-    return 'health'
+    return 'dashboard'
   }, [searchParams])
 
   const activeId = resolveActive()

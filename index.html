@@ -21,7 +21,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <title>Nextli: וייבקוד</title>
-    <!-- GA loaded dynamically after cookie consent — see src/lib/analytics.ts -->
+    <!-- Google tag (gtag.js) — consent mode: denied by default, granted after user accepts cookies -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WRL0SR0JW4"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      // Default: deny all until user consents
+      gtag('consent', 'default', {
+        analytics_storage: 'denied',
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        wait_for_update: 500
+      });
+      gtag('js', new Date());
+      gtag('config', 'G-WRL0SR0JW4');
+    </script>
   </head>
   <body>
     <div id="root"></div>

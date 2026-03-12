@@ -1,12 +1,10 @@
 /**
- * Google Analytics — loaded dynamically only after user consents to cookies.
- * Replace GA_MEASUREMENT_ID with your real ID when deploying.
+ * Google Analytics — uses Google Consent Mode v2.
+ * The gtag script is loaded in index.html with consent defaulting to 'denied'.
+ * This module updates consent state based on user's cookie choice.
  */
 
-const GA_ID = 'G-WRL0SR0JW4'
 const COOKIE_KEY = 'nextli-cookie-consent'
-
-let loaded = false
 
 declare global {
   interface Window {
@@ -15,34 +13,25 @@ declare global {
   }
 }
 
+/** Grant analytics consent — called when user accepts cookies */
 export function loadAnalytics() {
-  if (loaded) return
-  if (!GA_ID || GA_ID === 'GA_MEASUREMENT_ID') return // skip placeholder
-  loaded = true
-
-  // Inject gtag.js script
-  const script = document.createElement('script')
-  script.async = true
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`
-  document.head.appendChild(script)
-
-  // Initialize dataLayer and gtag
-  window.dataLayer = window.dataLayer || []
-  window.gtag = function gtag(...args: unknown[]) {
-    window.dataLayer.push(args)
-  }
-  window.gtag('js', new Date())
-  window.gtag('config', GA_ID)
+  if (typeof window.gtag !== 'function') return
+  window.gtag('consent', 'update', {
+    analytics_storage: 'granted',
+  })
 }
 
+/** Revoke analytics consent — called when user declines cookies */
 export function disableAnalytics() {
-  if (!GA_ID || GA_ID === 'GA_MEASUREMENT_ID') return
-  ;(window as unknown as Record<string, unknown>)[`ga-disable-${GA_ID}`] = true
+  if (typeof window.gtag !== 'function') return
+  window.gtag('consent', 'update', {
+    analytics_storage: 'denied',
+  })
 }
 
 /**
  * Call on app init — if user already accepted cookies in a previous session,
- * load GA automatically. If declined, disable it.
+ * grant consent automatically. If declined, keep denied.
  */
 export function initAnalyticsFromConsent() {
   const consent = localStorage.getItem(COOKIE_KEY)
@@ -51,5 +40,5 @@ export function initAnalyticsFromConsent() {
   } else if (consent === 'declined') {
     disableAnalytics()
   }
-  // If no consent yet — do nothing, wait for the banner
+  // If no consent yet — stays 'denied' (the default from index.html)
 }

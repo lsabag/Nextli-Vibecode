@@ -12,10 +12,29 @@ export function ContactSection({ settings }: Props) {
   const [sent, setSent] = useState(false)
   const formId = useId()
 
-  function handleSubmit(e: React.FormEvent) {
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // Future: send to Supabase / email service
-    setSent(true)
+    setSending(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(data.error || 'שגיאה בשליחה')
+      }
+      setSent(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'שגיאה בשליחה')
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -110,11 +129,17 @@ export function ContactSection({ settings }: Props) {
                   dir="rtl"
                 />
               </div>
+              {error && (
+                <div role="alert" className="bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl px-4 py-3 text-sm">
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-semibold transition-colors"
+                disabled={sending}
+                className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white py-3 rounded-xl font-semibold transition-colors"
               >
-                שלח הודעה
+                {sending ? 'שולח...' : 'שלח הודעה'}
               </button>
             </form>
           )}

@@ -12,8 +12,8 @@ const DEFAULT_SETTINGS: SystemSettingsMap = {
   hero_headline:    'מרעיון למוצר',
   hero_subheadline: 'תוך 3 מפגשים',
   hero_description: 'לומדים לבנות מוצרים דיגיטליים אמיתיים עם AI — בלי ניסיון קודם בקוד',
-  contact_email:    'hello@nextli.co',
-  contact_phone:    '+972-50-000-0000',
+  contact_email:    '',
+  contact_phone:    '',
   fomo_banner_active: 'false',
   fomo_text: '',
 }

@@ -25,6 +25,9 @@ const contentTypeLabels: Record<ContentType, string> = {
   code:       'קוד',
   video:      'וידאו',
   file:       'קובץ',
+  prompt:     'פרומפט',
+  feedback:   'משוב',
+  prep:       'הכנה',
 }
 
 const contentTypeIcons: Record<ContentType, React.ElementType> = {
@@ -33,6 +36,9 @@ const contentTypeIcons: Record<ContentType, React.ElementType> = {
   code:      Code,
   video:     Video,
   file:      File,
+  prompt:    Copy,
+  feedback:  Eye,
+  prep:      Calendar,
 }
 
 // Convert YouTube/Vimeo watch URLs to embed URLs

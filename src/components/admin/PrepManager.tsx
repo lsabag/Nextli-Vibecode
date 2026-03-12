@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { getAdminPrepChecklist, upsertPrepItem, deletePrepItem, getItemLinks, type PrepLink } from '@/lib/supabase/queries/prep'
 import { supabase } from '@/lib/supabase/client'
 import { Plus, Trash2, ExternalLink, Save, ChevronDown, Eye, ArrowUp, ArrowDown, Copy, Pencil, CheckCircle, Circle, Rocket, ArrowRightLeft, GripVertical } from 'lucide-react'
@@ -13,7 +13,6 @@ import {
   useDroppable,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
 } from '@dnd-kit/core'
 import {
   SortableContext,

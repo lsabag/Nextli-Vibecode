@@ -21,7 +21,7 @@ export function NotesViewer() {
       getAdminCourseSessions(),
     ]).then(([notesData, usersData, sessionsData]) => {
       setNotes(notesData.filter(n => n.content.trim().length > 0))
-      setUsers(new Map(usersData.map(u => [u.id, u.full_name || u.email || u.id])))
+      setUsers(new Map(usersData.map(u => [u.id, u.full_name || u.id])))
       setSessions(new Map(sessionsData.map(s => [s.id, `מפגש ${s.session_number}: ${s.title}`])))
       setLoading(false)
     }).catch(() => setLoading(false))

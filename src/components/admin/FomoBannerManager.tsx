@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAdminSystemSettings, updateSystemSetting } from '@/lib/supabase/queries/admin'
-import { FomoBanner, FOMO_VARIANT_LABELS } from '@/components/landing/FomoBanner'
+import { FomoBanner } from '@/components/landing/FomoBanner'
 import type { FomoVariant } from '@/components/landing/FomoBanner'
 import { Save, RotateCcw } from 'lucide-react'
 import DateTimePicker from '@/components/ui/DateTimePicker'

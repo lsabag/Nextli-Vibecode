@@ -4,14 +4,24 @@ import { supabase } from '@/lib/supabase/client'
 import { Link } from 'react-router-dom'
 import { SEOHead } from '@/components/shared/SEOHead'
 
+type Mode = 'login' | 'signup' | 'setup' | 'change'
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [mode, setMode] = useState<Mode>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const formId = useId()
+
+  function switchMode(m: Mode) {
+    setMode(m)
+    setError(null)
+    setSuccessMsg(null)
+    setNewPassword('')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -20,19 +30,62 @@ export default function LoginPage() {
     setSuccessMsg(null)
 
     try {
-      if (isSignUp) {
+      if (mode === 'setup') {
+        const res = await fetch('/api/auth/setup-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        })
+        const data = await res.json() as { error?: string }
+        if (!res.ok) throw new Error(data.error || 'שגיאה')
+        setSuccessMsg('סיסמה הוגדרה בהצלחה! כעת תוכל להתחבר.')
+        setMode('login')
+      } else if (mode === 'change') {
+        const res = await fetch('/api/auth/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, currentPassword: password, newPassword }),
+        })
+        const data = await res.json() as { error?: string }
+        if (!res.ok) throw new Error(data.error || 'שגיאה')
+        setSuccessMsg('הסיסמה שונתה בהצלחה!')
+        setPassword('')
+        setNewPassword('')
+      } else if (mode === 'signup') {
         const { error: signUpError } = await supabase.auth.signUp({ email, password })
         if (signUpError) throw signUpError
-        setSuccessMsg('נשלח אימייל אישור! בדוק את תיבת הדואר שלך.')
+        setSuccessMsg('החשבון נוצר בהצלחה!')
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-        if (signInError) throw signInError
+        if (signInError) {
+          // If server says password not set, switch to setup mode
+          if (signInError.message?.includes('setup-password') || signInError.message?.includes('להגדיר סיסמה')) {
+            setMode('setup')
+            setError('יש להגדיר סיסמה קודם. הזן סיסמה חדשה.')
+          } else {
+            throw signInError
+          }
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה בהתחברות')
     } finally {
       setLoading(false)
     }
+  }
+
+  const titles: Record<Mode, string> = {
+    login: 'כניסה לחשבון קיים',
+    signup: 'צור חשבון חדש',
+    setup: 'הגדרת סיסמה ראשונית',
+    change: 'שינוי סיסמה',
+  }
+
+  const buttonLabels: Record<Mode, string> = {
+    login: 'כניסה',
+    signup: 'צור חשבון',
+    setup: 'הגדר סיסמה',
+    change: 'שנה סיסמה',
   }
 
   return (
@@ -48,9 +101,7 @@ export default function LoginPage() {
           <Link to="/" aria-label="חזרה לדף הבית" className="text-2xl font-black text-white">
             Nextli: <span className="text-blue-400">וייבקוד</span>
           </Link>
-          <h1 className="text-gray-500 mt-2 text-sm">
-            {isSignUp ? 'צור חשבון חדש' : 'כניסה לחשבון קיים'}
-          </h1>
+          <h1 className="text-gray-500 mt-2 text-sm">{titles[mode]}</h1>
         </div>
 
         {error && (
@@ -65,7 +116,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4" aria-label={isSignUp ? 'טופס הרשמה' : 'טופס התחברות'} aria-describedby={error ? 'login-error' : undefined}>
+        <form onSubmit={handleSubmit} className="space-y-4" aria-label={titles[mode]} aria-describedby={error ? 'login-error' : undefined}>
           <div>
             <label htmlFor={`${formId}-email`} className="block text-sm font-medium text-gray-400 mb-1">אימייל</label>
             <input
@@ -82,14 +133,16 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label htmlFor={`${formId}-password`} className="block text-sm font-medium text-gray-400 mb-1">סיסמה</label>
+            <label htmlFor={`${formId}-password`} className="block text-sm font-medium text-gray-400 mb-1">
+              {mode === 'change' ? 'סיסמה נוכחית' : 'סיסמה'}
+            </label>
             <input
               id={`${formId}-password`}
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              autoComplete={isSignUp ? 'new-password' : 'current-password'}
+              autoComplete={mode === 'signup' || mode === 'setup' ? 'new-password' : 'current-password'}
               aria-invalid={!!error}
               placeholder="לפחות 6 תווים"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors text-white placeholder-gray-600"
@@ -97,24 +150,58 @@ export default function LoginPage() {
             />
           </div>
 
+          {mode === 'change' && (
+            <div>
+              <label htmlFor={`${formId}-new-password`} className="block text-sm font-medium text-gray-400 mb-1">סיסמה חדשה</label>
+              <input
+                id={`${formId}-new-password`}
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                placeholder="לפחות 6 תווים"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors text-white placeholder-gray-600"
+                dir="ltr"
+              />
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white py-3.5 rounded-xl font-semibold transition-colors mt-2"
           >
-            {loading ? 'אנא המתן...' : isSignUp ? 'צור חשבון' : 'כניסה'}
+            {loading ? 'אנא המתן...' : buttonLabels[mode]}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          {isSignUp ? 'כבר יש לך חשבון?' : 'אין לך חשבון?'}{' '}
-          <button
-            onClick={() => { setIsSignUp(v => !v); setError(null); setSuccessMsg(null) }}
-            className="text-blue-400 hover:text-blue-300 font-medium underline-offset-4 hover:underline"
-          >
-            {isSignUp ? 'כניסה' : 'הרשמה'}
-          </button>
-        </p>
+        <div className="text-center text-sm text-gray-500 mt-6 space-y-2">
+          {mode === 'login' && (
+            <>
+              <p>
+                אין לך חשבון?{' '}
+                <button onClick={() => switchMode('signup')} className="text-blue-400 hover:text-blue-300 font-medium underline-offset-4 hover:underline">הרשמה</button>
+              </p>
+              <p>
+                <button onClick={() => switchMode('setup')} className="text-gray-500 hover:text-gray-400 text-xs underline-offset-4 hover:underline">הגדרת סיסמה ראשונית</button>
+                {' | '}
+                <button onClick={() => switchMode('change')} className="text-gray-500 hover:text-gray-400 text-xs underline-offset-4 hover:underline">שינוי סיסמה</button>
+              </p>
+            </>
+          )}
+          {mode === 'signup' && (
+            <p>
+              כבר יש לך חשבון?{' '}
+              <button onClick={() => switchMode('login')} className="text-blue-400 hover:text-blue-300 font-medium underline-offset-4 hover:underline">כניסה</button>
+            </p>
+          )}
+          {(mode === 'setup' || mode === 'change') && (
+            <p>
+              <button onClick={() => switchMode('login')} className="text-blue-400 hover:text-blue-300 font-medium underline-offset-4 hover:underline">חזרה לכניסה</button>
+            </p>
+          )}
+        </div>
       </motion.div>
     </main>
   )

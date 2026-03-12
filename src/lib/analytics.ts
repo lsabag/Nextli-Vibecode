@@ -3,7 +3,7 @@
  * Replace GA_MEASUREMENT_ID with your real ID when deploying.
  */
 
-const GA_ID = 'GA_MEASUREMENT_ID' // ← Replace with real ID
+const GA_ID = 'G-WRL0SR0JW4'
 const COOKIE_KEY = 'nextli-cookie-consent'
 
 let loaded = false
@@ -17,7 +17,7 @@ declare global {
 
 export function loadAnalytics() {
   if (loaded) return
-  if (GA_ID === 'GA_MEASUREMENT_ID') return // skip placeholder
+  if (!GA_ID || GA_ID === 'GA_MEASUREMENT_ID') return // skip placeholder
   loaded = true
 
   // Inject gtag.js script
@@ -36,7 +36,7 @@ export function loadAnalytics() {
 }
 
 export function disableAnalytics() {
-  if (GA_ID === 'GA_MEASUREMENT_ID') return
+  if (!GA_ID || GA_ID === 'GA_MEASUREMENT_ID') return
   ;(window as unknown as Record<string, unknown>)[`ga-disable-${GA_ID}`] = true
 }
 

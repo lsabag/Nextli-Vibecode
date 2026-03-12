@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /workspace
+Disallow: /admin
+Disallow: /onboarding
+
+Sitemap: https://nextli.co.il/sitemap.xml

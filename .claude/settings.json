@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npx supabase:*)",
+      "Bash(SUPABASE_ACCESS_TOKEN=sbp_00f45757b0a68ed1bb958553394c45303b6ccd8d npx supabase:*)",
+      "Read(//d/claude/Nextli-Vibecode/**)"
+    ]
+  }
+}

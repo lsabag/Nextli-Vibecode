@@ -9,7 +9,7 @@ interface Env {
   TELEGRAM_CHAT_ID?: string;
 }
 
-const MAX_PER_HOUR = 3
+const MAX_PER_HOUR = 2
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {

@@ -10,6 +10,7 @@ interface Env {
 
 interface UserRow {
   id: string;
+  email: string;
   full_name: string;
   role: string;
   payment_status: string;
@@ -115,7 +116,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const authUser = {
       id: user.id,
-      email: user.id, // MVP: id is used as email
+      email: user.email || user.id,
       aud: 'authenticated',
       role: user.role,
       app_metadata: { role: user.role },

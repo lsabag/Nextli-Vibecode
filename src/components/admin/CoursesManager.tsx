@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { lazy, Suspense, useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   getAdminCourses,
@@ -8,7 +8,8 @@ import {
 } from '@/lib/supabase/queries/admin'
 import type { Course, CourseStatus } from '@/types'
 import { Plus, Trash2, Save, ChevronLeft, BookOpen, Pencil } from 'lucide-react'
-import { SessionsManager } from './SessionsManager'
+
+const SessionsManager = lazy(() => import('./SessionsManager').then(m => ({ default: m.SessionsManager })))
 
 const statusLabels: Record<CourseStatus, string> = {
   draft: 'טיוטה',
@@ -107,7 +108,9 @@ export function CoursesManager() {
           </span>
         </div>
 
-        <SessionsManager course={selectedCourse} />
+        <Suspense fallback={<div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>}>
+          <SessionsManager course={selectedCourse} />
+        </Suspense>
       </div>
     )
   }

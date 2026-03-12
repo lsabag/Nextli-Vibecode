@@ -1,19 +1,18 @@
 import { useState, useEffect } from 'react'
-import type { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase/client'
+import { supabase, type AuthUser, type AuthSession } from '@/lib/supabase/client'
 import { getUserProfile } from '@/lib/supabase/queries/users'
 import type { UserProfile } from '@/types'
 
 type AuthState = {
-  user: User | null
+  user: AuthUser | null
   profile: UserProfile | null
-  session: Session | null
+  session: AuthSession | null
   loading: boolean
 }
 
 const DEV_BYPASS = import.meta.env.VITE_DEV_BYPASS === 'true'
 
-const DEV_USER = {
+const DEV_USER: AuthUser = {
   id: 'dev-admin-001',
   email: 'admin@dev.local',
   aud: 'authenticated',
@@ -21,7 +20,7 @@ const DEV_USER = {
   app_metadata: {},
   user_metadata: { full_name: 'Dev Admin' },
   created_at: new Date().toISOString(),
-} as User
+}
 
 const DEV_PROFILE: UserProfile = {
   id: 'dev-admin-001',

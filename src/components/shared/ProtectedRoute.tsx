@@ -1,10 +1,10 @@
 import { Navigate } from 'react-router-dom'
-import type { User } from '@supabase/supabase-js'
+import type { AuthUser } from '@/lib/supabase/client'
 import type { UserProfile } from '@/types'
 
 type Props = {
   children: React.ReactNode
-  user: User | null
+  user: AuthUser | null
   profile?: UserProfile | null
   requireAdmin?: boolean
   requirePaid?: boolean

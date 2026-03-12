@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, LogIn, Sparkles } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
-import type { User } from '@supabase/supabase-js'
+import type { AuthUser } from '@/lib/supabase/client'
 import type { UserProfile } from '@/types'
 
 type Props = {
-  user: User | null
+  user: AuthUser | null
   profile: UserProfile | null
 }
 

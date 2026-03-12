@@ -14,6 +14,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          icons: ['lucide-react'],
+          motion: ['framer-motion'],
+        },
+      },
+    },
+  },
   server: {
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',

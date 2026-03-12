@@ -1,22 +1,23 @@
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase/client'
 import { SEOHead } from '@/components/shared/SEOHead'
-import { StudentInsights } from '@/components/admin/StudentInsights'
-import { WizardManager } from '@/components/admin/WizardManager'
-import { CoursesManager } from '@/components/admin/CoursesManager'
-import { SettingsManager } from '@/components/admin/SettingsManager'
-import { SystemHealthCheck } from '@/components/admin/SystemHealthCheck'
-import { LandingManager } from '@/components/admin/LandingManager'
-import { WaitlistManager } from '@/components/admin/WaitlistManager'
-import { PrepManager } from '@/components/admin/PrepManager'
-import { NotesViewer } from '@/components/admin/NotesViewer'
-import { PromptShowcaseManager } from '@/components/admin/PromptShowcaseManager'
 import {
   LayoutDashboard, Users, GraduationCap, Home, Settings, Menu,
   ChevronDown,
 } from 'lucide-react'
+
+const StudentInsights = lazy(() => import('@/components/admin/StudentInsights').then(m => ({ default: m.StudentInsights })))
+const WizardManager = lazy(() => import('@/components/admin/WizardManager').then(m => ({ default: m.WizardManager })))
+const CoursesManager = lazy(() => import('@/components/admin/CoursesManager').then(m => ({ default: m.CoursesManager })))
+const SettingsManager = lazy(() => import('@/components/admin/SettingsManager').then(m => ({ default: m.SettingsManager })))
+const SystemHealthCheck = lazy(() => import('@/components/admin/SystemHealthCheck').then(m => ({ default: m.SystemHealthCheck })))
+const LandingManager = lazy(() => import('@/components/admin/LandingManager').then(m => ({ default: m.LandingManager })))
+const WaitlistManager = lazy(() => import('@/components/admin/WaitlistManager').then(m => ({ default: m.WaitlistManager })))
+const PrepManager = lazy(() => import('@/components/admin/PrepManager').then(m => ({ default: m.PrepManager })))
+const NotesViewer = lazy(() => import('@/components/admin/NotesViewer').then(m => ({ default: m.NotesViewer })))
+const PromptShowcaseManager = lazy(() => import('@/components/admin/PromptShowcaseManager').then(m => ({ default: m.PromptShowcaseManager })))
 
 // ── Navigation structure ─────────────────────────────────────────────────────
 
@@ -309,7 +310,9 @@ export default function AdminPage() {
       {/* Main content */}
       <main className="flex-1 overflow-auto" id="main-content">
         <div className="max-w-6xl mx-auto p-4 md:p-8 pt-16 md:pt-8">
-          {renderContent(activeId)}
+          <Suspense fallback={<div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>}>
+            {renderContent(activeId)}
+          </Suspense>
         </div>
       </main>
     </div>

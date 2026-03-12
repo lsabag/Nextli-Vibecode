@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { SystemSettingsMap, UserProfile } from '@/types'
-import type { User } from '@supabase/supabase-js'
+import type { AuthUser } from '@/lib/supabase/client'
 
 type Props = {
   settings: SystemSettingsMap
-  user: User | null
+  user: AuthUser | null
   profile: UserProfile | null
 }
 

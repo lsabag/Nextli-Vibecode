@@ -1,0 +1,11 @@
+name = "nextli-vibecode"
+compatibility_date = "2024-12-01"
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nextli-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[vars]
+JWT_SECRET = "REPLACE_WITH_SECRET"

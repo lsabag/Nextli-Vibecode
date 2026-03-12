@@ -1,18 +1,33 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from './types'
+/**
+ * Database client — replaces Supabase SDK with a backend-agnostic implementation.
+ *
+ * DEV_BYPASS=true  → mock data in localStorage (no server needed)
+ * Production       → fetch-based client calling Cloudflare Worker API at /api/*
+ */
+
 import { broadcastChange, onCrossTabChange } from '@/lib/crossTabSync'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const DEV_BYPASS = import.meta.env.VITE_DEV_BYPASS === 'true'
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY')
+// ── Auth types (replaces @supabase/supabase-js User / Session) ──────────────
+
+export type AuthUser = {
+  id: string
+  email: string
+  aud: string
+  role: string
+  app_metadata: Record<string, unknown>
+  user_metadata: Record<string, unknown>
+  created_at: string
 }
 
-const realClient = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export type AuthSession = {
+  user: AuthUser
+  access_token: string
+  expires_at?: number
+}
 
-// ── Dev mock data ────────────────────────────────────────────────────────────
+// ── Mock seed data ──────────────────────────────────────────────────────────
 
 const MOCK_STORAGE_KEY = 'nextli-mock-data'
 const MOCK_COURSE_ID = 'course-001'
@@ -80,12 +95,13 @@ const seedData: Record<string, unknown[]> = {
   ],
 }
 
+// ── Mock data persistence ───────────────────────────────────────────────────
+
 function loadMockData(): Record<string, unknown[]> {
   try {
     const stored = localStorage.getItem(MOCK_STORAGE_KEY)
     if (stored) {
       const parsed = JSON.parse(stored) as Record<string, unknown[]>
-      // Backfill: if seed has data for a table but stored is empty/missing, inject seed
       for (const key of Object.keys(seedData)) {
         if ((!parsed[key] || parsed[key].length === 0) && seedData[key].length > 0) {
           parsed[key] = structuredClone(seedData[key])
@@ -103,7 +119,7 @@ function persistMockData() {
   } catch { /* quota exceeded — silently ignore */ }
 }
 
-const mockData: Record<string, unknown[]> = loadMockData()
+const mockData: Record<string, unknown[]> = DEV_BYPASS ? loadMockData() : {}
 
 /** Reset mock data to seed defaults (call from dev console: resetMockData()) */
 export function resetMockData() {
@@ -113,7 +129,6 @@ export function resetMockData() {
   location.reload()
 }
 
-// Expose on window for easy dev access
 if (DEV_BYPASS && typeof window !== 'undefined') {
   (window as unknown as Record<string, unknown>).resetMockData = resetMockData
 }
@@ -126,7 +141,8 @@ function createMockQueryBuilder(tableName: string, op: MockOp = 'select', payloa
   const filters: Array<(rows: Record<string, unknown>[]) => Record<string, unknown>[]> = []
   let resultOverride: { data: unknown; error: null } | null = null
 
-  const builder: Record<string, unknown> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const builder: Record<string, any> = {}
 
   const noopChain = [
     'neq', 'gt', 'gte', 'lt', 'lte', 'like', 'ilike',
@@ -194,7 +210,6 @@ function createMockQueryBuilder(tableName: string, op: MockOp = 'select', payloa
     if (op === 'upsert') {
       const items = Array.isArray(payload) ? payload : [payload]
       for (const item of items as Record<string, unknown>[]) {
-        // Match by id, or by key (for system_settings-style tables)
         const idx = table.findIndex(r =>
           (item.id && r.id === item.id) || (!item.id && item.key && r.key === item.key)
         )
@@ -213,7 +228,6 @@ function createMockQueryBuilder(tableName: string, op: MockOp = 'select', payloa
     return rows
   }
 
-  // Make builder a proper thenable for await / Promise.all support
   const resultPromise = () => {
     if (op !== 'select') {
       applyMutation()
@@ -237,32 +251,238 @@ function createMockQueryBuilder(tableName: string, op: MockOp = 'select', payloa
   return builder
 }
 
-function createMockClient(): SupabaseClient<Database> {
-  return new Proxy(realClient, {
-    get(target, prop) {
-      if (prop === 'from') {
-        return (table: string) => createMockQueryBuilder(table)
-      }
-      if (prop === 'rpc') {
-        return () => createMockQueryBuilder('_rpc')
-      }
-      if (prop === 'channel') {
-        return () => {
-          const ch: Record<string, unknown> = {}
-          ch.on = () => ch
-          ch.subscribe = () => ch
-          return ch
-        }
-      }
-      if (prop === 'removeChannel') {
-        return () => {}
-      }
-      return Reflect.get(target, prop)
-    },
-  })
+// ── API query builder (production — calls Cloudflare Worker) ────────────────
+
+type FilterSpec = { type: string; column?: string; value?: unknown; expr?: string }
+
+type QuerySpec = {
+  table: string
+  operation: string
+  columns: string | null
+  filters: FilterSpec[]
+  orders: Array<{ column: string; ascending: boolean }>
+  limit: number | null
+  single: boolean
+  maybeSingle: boolean
+  payload: unknown | null
+  upsertOptions: { onConflict?: string } | null
 }
 
-export const supabase: SupabaseClient<Database> = DEV_BYPASS ? createMockClient() : realClient
+function freshSpec(table: string, operation = 'select', payload?: unknown): QuerySpec {
+  return {
+    table, operation,
+    columns: null, filters: [], orders: [],
+    limit: null, single: false, maybeSingle: false,
+    payload: payload ?? null, upsertOptions: null,
+  }
+}
+
+async function executeApiQuery(spec: QuerySpec): Promise<{ data: unknown; error: unknown }> {
+  try {
+    const res = await fetch('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(spec),
+    })
+    const json = await res.json()
+    if (!res.ok) return { data: null, error: json.error || 'Request failed' }
+    if (spec.single || spec.maybeSingle) {
+      return { data: Array.isArray(json.data) ? json.data[0] ?? null : json.data, error: null }
+    }
+    return { data: json.data, error: null }
+  } catch (err) {
+    return { data: null, error: err }
+  }
+}
+
+function createApiQueryBuilder(spec: QuerySpec) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const builder: Record<string, any> = {}
+
+  // Noop chain methods (not used in production SQL but keep interface compatible)
+  const noopChain = ['neq', 'gt', 'gte', 'lt', 'lte', 'like', 'contains', 'containedBy', 'textSearch', 'range', 'not', 'filter', 'match']
+  for (const m of noopChain) builder[m] = () => builder
+
+  builder.select = (columns?: string) => { spec.columns = columns ?? '*'; return builder }
+  builder.insert = (d: unknown) => createApiQueryBuilder(freshSpec(spec.table, 'insert', d))
+  builder.update = (d: unknown) => createApiQueryBuilder(freshSpec(spec.table, 'update', d))
+  builder.upsert = (d: unknown, opts?: { onConflict?: string }) => {
+    const s = freshSpec(spec.table, 'upsert', d)
+    s.upsertOptions = opts ?? null
+    return createApiQueryBuilder(s)
+  }
+  builder.delete = () => createApiQueryBuilder(freshSpec(spec.table, 'delete'))
+
+  builder.eq = (col: string, val: unknown) => { spec.filters.push({ type: 'eq', column: col, value: val }); return builder }
+  builder.in = (col: string, vals: unknown[]) => { spec.filters.push({ type: 'in', column: col, value: vals }); return builder }
+  builder.or = (expr: string) => { spec.filters.push({ type: 'or', expr }); return builder }
+  builder.ilike = (col: string, val: string) => { spec.filters.push({ type: 'ilike', column: col, value: val }); return builder }
+  builder.is = (col: string, val: unknown) => { spec.filters.push({ type: 'is', column: col, value: val }); return builder }
+
+  builder.order = (col: string, opts?: { ascending?: boolean }) => {
+    spec.orders.push({ column: col, ascending: opts?.ascending ?? true })
+    return builder
+  }
+  builder.limit = (n: number) => { spec.limit = n; return builder }
+  builder.single = () => { spec.single = true; return builder }
+  builder.maybeSingle = () => { spec.maybeSingle = true; return builder }
+
+  builder.then = (
+    onFulfilled?: ((v: unknown) => unknown) | null,
+    onRejected?: ((reason: unknown) => unknown) | null,
+  ) => executeApiQuery(spec).then(onFulfilled, onRejected)
+
+  builder.catch = (onRejected?: ((reason: unknown) => unknown) | null) =>
+    executeApiQuery(spec).catch(onRejected)
+
+  return builder
+}
+
+// ── Auth clients ────────────────────────────────────────────────────────────
+
+type AuthChangeCallback = (event: string, session: AuthSession | null) => void
+
+function createMockAuth() {
+  return {
+    async signInWithPassword(_creds: { email: string; password: string }) {
+      return { data: { user: null, session: null }, error: null }
+    },
+    async signOut() {
+      return { error: null }
+    },
+    async getSession() {
+      return { data: { session: null }, error: null }
+    },
+    async getUser() {
+      return { data: { user: null }, error: null }
+    },
+    onAuthStateChange(_callback: AuthChangeCallback) {
+      return { data: { subscription: { unsubscribe: () => {} } } }
+    },
+  }
+}
+
+function createApiAuth() {
+  const listeners = new Set<AuthChangeCallback>()
+
+  function notify(event: string, session: AuthSession | null) {
+    for (const fn of listeners) fn(event, session)
+  }
+
+  return {
+    async signInWithPassword(creds: { email: string; password: string }) {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(creds),
+      })
+      const json = await res.json()
+      if (!res.ok) return { data: { user: null, session: null }, error: { message: json.error } }
+      notify('SIGNED_IN', json.session)
+      return { data: { user: json.user, session: json.session }, error: null }
+    },
+
+    async signOut() {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+      notify('SIGNED_OUT', null)
+      return { error: null }
+    },
+
+    async getSession() {
+      try {
+        const res = await fetch('/api/auth/session', { credentials: 'include' })
+        if (!res.ok) return { data: { session: null }, error: null }
+        const json = await res.json()
+        return { data: { session: json.session }, error: null }
+      } catch {
+        return { data: { session: null }, error: null }
+      }
+    },
+
+    async getUser() {
+      try {
+        const res = await fetch('/api/auth/session', { credentials: 'include' })
+        if (!res.ok) return { data: { user: null }, error: null }
+        const json = await res.json()
+        return { data: { user: json.session?.user ?? null }, error: null }
+      } catch {
+        return { data: { user: null }, error: null }
+      }
+    },
+
+    onAuthStateChange(callback: AuthChangeCallback) {
+      listeners.add(callback)
+      // Check current session on init
+      this.getSession().then(({ data }) => {
+        callback('INITIAL_SESSION', data.session)
+      })
+      return { data: { subscription: { unsubscribe: () => listeners.delete(callback) } } }
+    },
+  }
+}
+
+// ── Channel stub (Realtime → future SSE/WebSocket) ──────────────────────────
+
+function createChannelStub() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ch: Record<string, any> = {}
+  ch.on = () => ch
+  ch.subscribe = () => ch
+  return ch
+}
+
+// ── Client factories ────────────────────────────────────────────────────────
+
+function createMockClient() {
+  return {
+    from: (table: string) => createMockQueryBuilder(table),
+    rpc: () => createMockQueryBuilder('_rpc'),
+    auth: createMockAuth(),
+    channel: () => createChannelStub(),
+    removeChannel: () => {},
+  }
+}
+
+function createApiClient() {
+  return {
+    from: (table: string) => createApiQueryBuilder(freshSpec(table)),
+    rpc: (fn: string, args?: Record<string, unknown>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const builder: Record<string, any> = {}
+      const execute = async () => {
+        try {
+          const res = await fetch(`/api/rpc/${fn}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(args ?? {}),
+          })
+          const json = await res.json()
+          if (!res.ok) return { data: null, error: json.error }
+          return { data: json.data, error: null }
+        } catch (err) {
+          return { data: null, error: err }
+        }
+      }
+      builder.then = (
+        onFulfilled?: ((v: unknown) => unknown) | null,
+        onRejected?: ((reason: unknown) => unknown) | null,
+      ) => execute().then(onFulfilled, onRejected)
+      builder.catch = (onRejected?: ((reason: unknown) => unknown) | null) => execute().catch(onRejected)
+      return builder
+    },
+    auth: createApiAuth(),
+    channel: () => createChannelStub(),
+    removeChannel: () => {},
+  }
+}
+
+// ── Export ───────────────────────────────────────────────────────────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const supabase: any = DEV_BYPASS ? createMockClient() : createApiClient()
 
 // In dev mode, reload in-memory mock data when another tab broadcasts changes
 if (DEV_BYPASS) {

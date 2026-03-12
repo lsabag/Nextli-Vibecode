@@ -168,9 +168,9 @@ function createMockQueryBuilder(tableName: string, op: MockOp = 'select', payloa
   builder.or = () => builder
   builder.order = (col: string, opts?: { ascending?: boolean }) => {
     const asc = opts?.ascending ?? true
-    filters.push(rows => [...rows].sort((a, b) => {
-      if (a[col] < b[col]) return asc ? -1 : 1
-      if (a[col] > b[col]) return asc ? 1 : -1
+    filters.push(rows => [...rows].sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+      if ((a[col] as string) < (b[col] as string)) return asc ? -1 : 1
+      if ((a[col] as string) > (b[col] as string)) return asc ? 1 : -1
       return 0
     }))
     return builder

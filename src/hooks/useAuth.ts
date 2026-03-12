@@ -54,7 +54,7 @@ export function useAuth(): AuthState {
     if (DEV_BYPASS) return
 
     supabase.auth.getSession()
-      .then(async ({ data: { session } }) => {
+      .then(async ({ data: { session } }: { data: { session: AuthSession | null } }) => {
         if (session?.user) {
           const profile = await loadProfile(session.user.id)
           setState({ user: session.user, profile, session, loading: false })
@@ -65,7 +65,7 @@ export function useAuth(): AuthState {
       .catch(() => setState({ user: null, profile: null, session: null, loading: false }))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (_event: string, session: AuthSession | null) => {
         if (session?.user) {
           const profile = await loadProfile(session.user.id)
           setState({ user: session.user, profile, session, loading: false })

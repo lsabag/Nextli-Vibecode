@@ -77,7 +77,7 @@ export function IntakeResult({ answers, onRestart }: Props) {
       setSessions(sessionsRes.data ?? [])
 
       // Pre-select the first active course
-      const active = allCourses.filter(c => c.status === 'active')
+      const active = allCourses.filter((c: { status: string }) => c.status === 'active')
       if (active.length > 0) setSelectedCourseId(active[0].id)
 
       setLoading(false)
@@ -86,8 +86,6 @@ export function IntakeResult({ answers, onRestart }: Props) {
 
   const activeCourses = courses.filter(c => c.status === 'active')
   const draftCourses = courses.filter(c => c.status === 'draft')
-  const hasAnyCourse = activeCourses.length > 0
-
   const selectedCourse = courses.find(c => c.id === selectedCourseId)
   const isSelectedActive = selectedCourse?.status === 'active'
 

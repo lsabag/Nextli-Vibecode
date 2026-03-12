@@ -37,7 +37,7 @@ export function loadAnalytics() {
 
 export function disableAnalytics() {
   if (GA_ID === 'GA_MEASUREMENT_ID') return
-  ;(window as Record<string, unknown>)[`ga-disable-${GA_ID}`] = true
+  ;(window as unknown as Record<string, unknown>)[`ga-disable-${GA_ID}`] = true
 }
 
 /**

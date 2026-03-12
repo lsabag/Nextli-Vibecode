@@ -465,8 +465,6 @@ function CardsVariant({ prompts, texts }: VariantProps) {
 function ChatVariant({ texts, chatScenarios = DEFAULT_CHAT_SCENARIOS }: VariantProps) {
   const [activeChat, setActiveChat] = useState(0)
   const [step, setStep] = useState(0) // 0=user msg, 1=ai thinking, 2=ai suggestion, 3=result
-  const timerRef = useRef<ReturnType<typeof setTimeout>>(null)
-
   useEffect(() => {
     setStep(0)
     const timers: ReturnType<typeof setTimeout>[] = []

@@ -14,7 +14,7 @@ import {
 import type { Course, CourseSession, SessionContent, ContentType, PrepChecklistItem } from '@/types'
 import {
   Lock, Unlock, ChevronDown, ChevronUp, Plus, Trash2, Save,
-  FileText, Code, Video, Copy, File, Eye, EyeOff, Calendar,
+  FileText, Code, Video, Copy, File, Eye, EyeOff,
   Zap, ArrowDown, ArrowUp, MessageSquare, ClipboardList, ExternalLink,
 } from 'lucide-react'
 import { RichTextEditor } from './RichTextEditor'

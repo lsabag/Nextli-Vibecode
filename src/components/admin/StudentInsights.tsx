@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAdminUsers, updateUserPaymentStatus, getWizardAnswersWithSteps, getAdminWizardSteps } from '@/lib/supabase/queries/admin'
+import { getAdminUsers, updateUserPaymentStatus, getWizardAnswersWithSteps } from '@/lib/supabase/queries/admin'
 import { exportToCSV } from '@/utils/exportCSV'
 import { Search, Download, Users, CreditCard, CheckCircle } from 'lucide-react'
 import type { UserProfile } from '@/types'

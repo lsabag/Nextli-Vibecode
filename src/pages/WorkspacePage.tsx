@@ -63,7 +63,7 @@ export default function WorkspacePage() {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'course_sessions' },
-        payload => {
+        (payload: { new: Record<string, unknown> }) => {
           const updated = payload.new as CourseSession
           setSessions(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s))
         }

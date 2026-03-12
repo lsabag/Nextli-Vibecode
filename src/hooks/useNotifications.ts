@@ -20,7 +20,7 @@ export function useNotifications(userId: string | undefined) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
-        payload => {
+        (payload: { new: Record<string, unknown> }) => {
           const newNotif = payload.new as Notification
           if (!newNotif.user_id || newNotif.user_id === userId) {
             setNotifications(prev => [newNotif, ...prev])

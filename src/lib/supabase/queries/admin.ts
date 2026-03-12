@@ -226,7 +226,7 @@ export async function getAdminSystemSettings(): Promise<Record<string, string>> 
     .from('system_settings')
     .select('key, value')
   if (error) throw error
-  return Object.fromEntries(data.map(row => [row.key, row.value]))
+  return Object.fromEntries(data.map((row: { key: string; value: string }) => [row.key, row.value]))
 }
 
 export async function updateSystemSetting(key: string, value: string): Promise<void> {

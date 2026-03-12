@@ -90,7 +90,7 @@ function PrepTabWrapper() {
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.from('courses').select('*').then(({ data }) => {
+    supabase.from('courses').select('*').then(({ data }: { data: { id: string; title: string }[] | null }) => {
       const list = (data ?? []) as { id: string; title: string }[]
       setCourses(list)
       if (list.length > 0) setSelectedCourseId(list[0].id)

@@ -64,6 +64,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const botToken = context.env.TELEGRAM_BOT_TOKEN
     const chatId = context.env.TELEGRAM_CHAT_ID
 
+    let telegramDebug: unknown = null
+
     if (botToken && chatId) {
       try {
         const text = [
@@ -74,7 +76,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           `*הודעה:* ${message || '(ללא הודעה)'}`,
         ].join('\n')
 
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -83,12 +85,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             parse_mode: 'Markdown',
           }),
         })
-      } catch {
-        // Telegram send failed — message is still saved in DB
+        telegramDebug = await tgRes.json()
+      } catch (err) {
+        telegramDebug = { error: err instanceof Error ? err.message : 'unknown error' }
       }
+    } else {
+      telegramDebug = { missing: !botToken ? 'TELEGRAM_BOT_TOKEN' : 'TELEGRAM_CHAT_ID' }
     }
 
-    return Response.json({ success: true })
+    // DEBUG: temporarily return telegram result — remove after testing
+    return Response.json({ success: true, _debug: telegramDebug })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Internal server error'
     return Response.json({ error: msg }, { status: 500 })

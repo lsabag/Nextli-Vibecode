@@ -304,6 +304,14 @@ export default function AdminPage() {
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-white/10">
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors block mb-2"
+          >
+            צפה בדף הבית
+          </a>
           <p className="text-[10px] text-gray-600 truncate mb-2">{user?.email}</p>
           <button
             onClick={handleSignOut}

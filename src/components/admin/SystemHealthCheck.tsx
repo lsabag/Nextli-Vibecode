@@ -292,7 +292,7 @@ async function runChecks(): Promise<CheckItem[]> {
     category: 'פיצ\'רים חסרים',
     label: 'טופס יצירת קשר לא שולח באמת',
     severity: 'error',
-    detail: 'הטופס מציג "נשלח" אבל לא שולח מייל. צריך לחבר שירות אימייל (SendGrid / Supabase Edge Function).',
+    detail: 'הטופס מציג "נשלח" אבל לא שולח מייל. צריך לחבר שירות אימייל (SendGrid / Resend / Cloudflare Email Workers).',
   })
 
   items.push({
@@ -330,13 +330,7 @@ async function runChecks(): Promise<CheckItem[]> {
 
   // sitemap.xml — created in public/sitemap.xml. Update when adding new public routes.
 
-  items.push({
-    id: 'supabase-not-connected',
-    category: 'השקה',
-    label: 'Supabase — מצב פיתוח בלבד',
-    severity: 'critical',
-    detail: 'המערכת רצה על נתונים מדומים (mock). צריך לחבר לבסיס נתונים אמיתי לפני השקה.',
-  })
+  // D1 database is now connected — no longer showing Supabase warning
 
   // ── Accessibility compliance (Israeli Standard 5568) ──────────────────
   // skip-nav and focus-trap — implemented

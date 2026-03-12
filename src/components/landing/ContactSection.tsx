@@ -23,7 +23,10 @@ export function ContactSection({ settings }: Props) {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message }),
+        body: JSON.stringify({
+          name, email, message,
+          website: (e.target as HTMLFormElement).querySelector<HTMLInputElement>('[name="website"]')?.value || '',
+        }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string }
@@ -89,6 +92,8 @@ export function ContactSection({ settings }: Props) {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4" aria-label="טופס יצירת קשר">
+              {/* Honeypot — hidden from real users, bots fill it */}
+              <input type="text" name="website" className="absolute opacity-0 pointer-events-none h-0 w-0" tabIndex={-1} autoComplete="off" aria-hidden="true" />
               <div>
                 <label htmlFor={`${formId}-name`} className="sr-only">שם מלא</label>
                 <input

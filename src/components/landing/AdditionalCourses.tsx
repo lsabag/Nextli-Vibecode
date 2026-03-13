@@ -55,7 +55,16 @@ export function AdditionalCourses({ settings }: Props) {
             >
               <div className="w-full h-32 bg-white/5 rounded-xl mb-5 flex items-center justify-center overflow-hidden">
                 {course.image_url ? (
-                  <img src={course.image_url} alt={course.title} className="w-full h-full object-cover" />
+                  <img
+                    src={course.image_url}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                    style={{
+                      objectPosition: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%`,
+                      transform: `scale(${(course.image_zoom ?? 100) / 100})`,
+                      transformOrigin: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%`,
+                    }}
+                  />
                 ) : (
                   <span className="text-4xl" aria-hidden="true">🎓</span>
                 )}

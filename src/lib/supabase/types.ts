@@ -258,6 +258,9 @@ export type Database = {
           rating: string
           show_rating: boolean
           image_url: string | null
+          image_crop_x: number
+          image_crop_y: number
+          image_zoom: number
           display_order: number
           is_active: boolean
           created_at: string
@@ -271,6 +274,9 @@ export type Database = {
           rating?: string
           show_rating?: boolean
           image_url?: string | null
+          image_crop_x?: number
+          image_crop_y?: number
+          image_zoom?: number
           display_order?: number
           is_active?: boolean
           created_at?: string
@@ -283,6 +289,9 @@ export type Database = {
           rating?: string
           show_rating?: boolean
           image_url?: string | null
+          image_crop_x?: number
+          image_crop_y?: number
+          image_zoom?: number
           display_order?: number
           is_active?: boolean
         }

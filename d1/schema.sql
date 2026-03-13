@@ -127,6 +127,9 @@ CREATE TABLE IF NOT EXISTS additional_courses (
   rating TEXT NOT NULL DEFAULT '',
   show_rating INTEGER NOT NULL DEFAULT 1,
   image_url TEXT,
+  image_crop_x INTEGER NOT NULL DEFAULT 50,
+  image_crop_y INTEGER NOT NULL DEFAULT 50,
+  image_zoom INTEGER NOT NULL DEFAULT 100,
   display_order INTEGER NOT NULL DEFAULT 0,
   is_active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))

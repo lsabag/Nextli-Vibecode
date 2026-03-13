@@ -56,6 +56,11 @@ const DEFAULT_SETTINGS: SystemSettingsMap = {
     { label: 'יצירת קשר', href: '#contact' },
   ]),
 
+  // ── Navbar popup ──
+  navbar_popup_title:    'עדיין לא רשום?',
+  navbar_popup_subtitle: 'בוא נמצא את המסלול שלך',
+  navbar_popup_icon:     '✨',
+
   // ── Footer ──
   footer_text: 'Nextli וייבקוד. כל הזכויות שמורות.',
 

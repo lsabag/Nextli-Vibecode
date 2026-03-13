@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getAdminSystemSettings, updateSystemSetting } from '@/lib/supabase/queries/admin'
-import { Save, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, ChevronDown, ChevronUp, Plus, Trash2, GripVertical } from 'lucide-react'
 
 type SettingRow = { key: string; value: string; dirty: boolean }
 
@@ -18,12 +18,12 @@ const settingLabels: Record<string, string> = {
   hero_badge_link:     'קישור תג Live (ריק = ללא קישור)',
   hero_cta_primary:    'טקסט כפתור ראשי',
   hero_cta_secondary:  'טקסט כפתור משני',
-  hero_features:       'כרטיסי פיצ\'רים (JSON)',
+  hero_features:       'כרטיסי פיצ\'רים',
 
   // Syllabus
   syllabus_heading:    'כותרת',
   syllabus_subheading: 'תת-כותרת',
-  syllabus_badges:     'אייקונים ותגיות מפגשים (JSON)',
+  syllabus_badges:     'אייקונים ותגיות מפגשים',
 
   // Projects
   projects_heading:    'כותרת',
@@ -45,7 +45,10 @@ const settingLabels: Record<string, string> = {
   contact_phone:       'טלפון',
 
   // Navbar
-  navbar_links:        'קישורי ניווט (JSON)',
+  navbar_links:          'קישורי ניווט',
+  navbar_popup_title:    'כותרת פופאפ "אזור אישי"',
+  navbar_popup_subtitle: 'תת-כותרת פופאפ',
+  navbar_popup_icon:     'אייקון פופאפ',
 
   // Footer
   footer_text:         'טקסט זכויות יוצרים',
@@ -89,7 +92,7 @@ const SECTIONS: { title: string; icon: string; keys: string[] }[] = [
   {
     title: 'ניווט ופוטר',
     icon: '🔗',
-    keys: ['navbar_links', 'footer_text'],
+    keys: ['navbar_links', 'navbar_popup_title', 'navbar_popup_subtitle', 'navbar_popup_icon', 'footer_text'],
   },
   {
     title: 'כללי',
@@ -99,12 +102,243 @@ const SECTIONS: { title: string; icon: string; keys: string[] }[] = [
 ]
 
 const TOGGLE_KEYS = new Set(['ai_mentor_active'])
-const JSON_KEYS = new Set(['hero_features', 'syllabus_badges', 'navbar_links'])
+const VISUAL_JSON_KEYS = new Set(['hero_features', 'syllabus_badges', 'navbar_links'])
 const TEXTAREA_KEYS = new Set(['hero_description', 'contact_description'])
+const EMOJI_PICKER_KEYS = new Set(['navbar_popup_icon'])
+const EMOJI_OPTIONS = ['✨', '🚀', '🎯', '💡', '⭐', '🔥', '💬', '👋', '📚', '🎓', '🛠️', '⚡', '💻', '🎨', '📱', '']
 
 function isPromptShowcaseKey(key: string) {
   return PROMPT_KEYS_PREFIX.some(p => key.startsWith(p))
 }
+
+function parseJSON<T>(json: string, fallback: T): T {
+  try { return JSON.parse(json) } catch { return fallback }
+}
+
+// ── Visual JSON Editors ──────────────────────────────────────────────────────
+
+type FeatureCard = { icon: string; label: string; desc: string }
+
+function FeatureCardsEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const cards = parseJSON<FeatureCard[]>(value, [])
+
+  function update(index: number, patch: Partial<FeatureCard>) {
+    const next = cards.map((c, i) => i === index ? { ...c, ...patch } : c)
+    onChange(JSON.stringify(next))
+  }
+
+  function add() {
+    onChange(JSON.stringify([...cards, { icon: '⭐', label: '', desc: '' }]))
+  }
+
+  function remove(index: number) {
+    onChange(JSON.stringify(cards.filter((_, i) => i !== index)))
+  }
+
+  function move(index: number, dir: -1 | 1) {
+    const next = [...cards]
+    const target = index + dir
+    if (target < 0 || target >= next.length) return
+    ;[next[index], next[target]] = [next[target], next[index]]
+    onChange(JSON.stringify(next))
+  }
+
+  return (
+    <div className="space-y-3">
+      {cards.map((card, i) => (
+        <div key={i} className="flex items-start gap-2 bg-white/3 border border-white/5 rounded-lg p-3">
+          <div className="flex flex-col gap-1 shrink-0">
+            <button onClick={() => move(i, -1)} disabled={i === 0} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors" title="הזז למעלה">
+              <ChevronUp size={14} />
+            </button>
+            <GripVertical size={14} className="text-gray-700 mx-auto" />
+            <button onClick={() => move(i, 1)} disabled={i === cards.length - 1} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors" title="הזז למטה">
+              <ChevronDown size={14} />
+            </button>
+          </div>
+          <div className="flex-1 space-y-2">
+            <div className="flex gap-2">
+              <EmojiSelect value={card.icon} onChange={v => update(i, { icon: v })} />
+              <input
+                type="text"
+                value={card.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder="כותרת"
+                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+                dir="auto"
+              />
+            </div>
+            <input
+              type="text"
+              value={card.desc}
+              onChange={e => update(i, { desc: e.target.value })}
+              placeholder="תיאור"
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+              dir="auto"
+            />
+          </div>
+          <button onClick={() => remove(i)} className="text-gray-600 hover:text-red-400 transition-colors shrink-0 mt-1" title="מחק">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button onClick={add} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors py-1">
+        <Plus size={14} /> הוסף כרטיס
+      </button>
+    </div>
+  )
+}
+
+type SyllabusBadge = { icon: string; badge: string }
+
+function SyllabusBadgesEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const badges = parseJSON<Record<string, SyllabusBadge>>(value, {})
+  const entries = Object.entries(badges).sort(([a], [b]) => Number(a) - Number(b))
+
+  function update(key: string, patch: Partial<SyllabusBadge>) {
+    const next = { ...badges, [key]: { ...badges[key], ...patch } }
+    onChange(JSON.stringify(next))
+  }
+
+  function add() {
+    const nextKey = String(entries.length > 0 ? Math.max(...entries.map(([k]) => Number(k))) + 1 : 1)
+    onChange(JSON.stringify({ ...badges, [nextKey]: { icon: '🎯', badge: '' } }))
+  }
+
+  function remove(key: string) {
+    const next = { ...badges }
+    delete next[key]
+    onChange(JSON.stringify(next))
+  }
+
+  return (
+    <div className="space-y-3">
+      {entries.map(([key, badge]) => (
+        <div key={key} className="flex items-center gap-2 bg-white/3 border border-white/5 rounded-lg p-3">
+          <span className="text-xs text-gray-600 w-8 shrink-0 text-center">#{key}</span>
+          <EmojiSelect value={badge.icon} onChange={v => update(key, { icon: v })} />
+          <input
+            type="text"
+            value={badge.badge}
+            onChange={e => update(key, { badge: e.target.value })}
+            placeholder="שם התגית"
+            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+            dir="auto"
+          />
+          <button onClick={() => remove(key)} className="text-gray-600 hover:text-red-400 transition-colors shrink-0" title="מחק">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button onClick={add} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors py-1">
+        <Plus size={14} /> הוסף מפגש
+      </button>
+    </div>
+  )
+}
+
+type NavLink = { label: string; href: string }
+
+function NavLinksEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const links = parseJSON<NavLink[]>(value, [])
+
+  function update(index: number, patch: Partial<NavLink>) {
+    const next = links.map((l, i) => i === index ? { ...l, ...patch } : l)
+    onChange(JSON.stringify(next))
+  }
+
+  function add() {
+    onChange(JSON.stringify([...links, { label: '', href: '#' }]))
+  }
+
+  function remove(index: number) {
+    onChange(JSON.stringify(links.filter((_, i) => i !== index)))
+  }
+
+  function move(index: number, dir: -1 | 1) {
+    const next = [...links]
+    const target = index + dir
+    if (target < 0 || target >= next.length) return
+    ;[next[index], next[target]] = [next[target], next[index]]
+    onChange(JSON.stringify(next))
+  }
+
+  return (
+    <div className="space-y-3">
+      {links.map((link, i) => (
+        <div key={i} className="flex items-center gap-2 bg-white/3 border border-white/5 rounded-lg p-3">
+          <div className="flex flex-col gap-0.5 shrink-0">
+            <button onClick={() => move(i, -1)} disabled={i === 0} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors">
+              <ChevronUp size={12} />
+            </button>
+            <button onClick={() => move(i, 1)} disabled={i === links.length - 1} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors">
+              <ChevronDown size={12} />
+            </button>
+          </div>
+          <input
+            type="text"
+            value={link.label}
+            onChange={e => update(i, { label: e.target.value })}
+            placeholder="טקסט"
+            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+            dir="rtl"
+          />
+          <input
+            type="text"
+            value={link.href}
+            onChange={e => update(i, { href: e.target.value })}
+            placeholder="#section או /page"
+            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500 transition-colors font-mono"
+            dir="ltr"
+          />
+          <button onClick={() => remove(i)} className="text-gray-600 hover:text-red-400 transition-colors shrink-0" title="מחק">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button onClick={add} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors py-1">
+        <Plus size={14} /> הוסף קישור
+      </button>
+    </div>
+  )
+}
+
+// ── Emoji selector dropdown ──────────────────────────────────────────────────
+
+function EmojiSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-lg flex items-center justify-center transition-colors"
+      >
+        {value || '?'}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full mt-1 right-0 z-50 bg-[#1a1a2e] border border-white/10 rounded-lg shadow-xl p-2 grid grid-cols-4 gap-1 w-44">
+            {EMOJI_OPTIONS.filter(Boolean).map(emoji => (
+              <button
+                key={emoji}
+                onClick={() => { onChange(emoji); setOpen(false) }}
+                className={`w-9 h-9 rounded-md text-lg flex items-center justify-center transition-colors ${
+                  value === emoji ? 'bg-blue-600/20 border border-blue-500/50' : 'hover:bg-white/10'
+                }`}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
 
 export function SettingsManager() {
   const [rows, setRows] = useState<SettingRow[]>([])
@@ -170,14 +404,45 @@ export function SettingsManager() {
       )
     }
 
-    if (JSON_KEYS.has(row.key) || TEXTAREA_KEYS.has(row.key)) {
+    if (EMOJI_PICKER_KEYS.has(row.key)) {
+      return (
+        <div className="flex flex-wrap gap-2">
+          {EMOJI_OPTIONS.map(emoji => (
+            <button
+              key={emoji || '__none'}
+              onClick={() => handleChange(row.key, emoji)}
+              className={`w-10 h-10 rounded-lg text-lg flex items-center justify-center transition-colors border ${
+                row.value === emoji
+                  ? 'bg-blue-600/20 border-blue-500/50'
+                  : 'bg-white/5 border-white/10 hover:bg-white/10'
+              }`}
+            >
+              {emoji || <span className="text-xs text-gray-500">ללא</span>}
+            </button>
+          ))}
+        </div>
+      )
+    }
+
+    // Visual JSON editors
+    if (row.key === 'hero_features') {
+      return <FeatureCardsEditor value={row.value} onChange={v => handleChange(row.key, v)} />
+    }
+    if (row.key === 'syllabus_badges') {
+      return <SyllabusBadgesEditor value={row.value} onChange={v => handleChange(row.key, v)} />
+    }
+    if (row.key === 'navbar_links') {
+      return <NavLinksEditor value={row.value} onChange={v => handleChange(row.key, v)} />
+    }
+
+    if (TEXTAREA_KEYS.has(row.key)) {
       return (
         <textarea
           value={row.value}
           onChange={e => handleChange(row.key, e.target.value)}
-          rows={JSON_KEYS.has(row.key) ? 4 : 2}
-          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500 transition-colors resize-y font-mono"
-          dir={JSON_KEYS.has(row.key) ? 'ltr' : 'rtl'}
+          rows={2}
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500 transition-colors resize-y"
+          dir="rtl"
         />
       )
     }
@@ -194,25 +459,42 @@ export function SettingsManager() {
   }
 
   function renderRow(row: SettingRow) {
+    const isVisual = VISUAL_JSON_KEYS.has(row.key)
     return (
-      <div key={row.key} className="flex items-start gap-3 py-3 border-b border-white/5 last:border-0">
-        <div className="w-44 shrink-0 pt-2">
-          <div className="text-sm text-gray-400">{settingLabels[row.key] ?? row.key}</div>
-          {JSON_KEYS.has(row.key) && (
-            <div className="text-xs text-gray-600 mt-0.5">עריכת JSON</div>
-          )}
-        </div>
-        <div className="flex-1">
-          {renderField(row)}
-        </div>
-        <button
-          onClick={() => handleSave(row)}
-          disabled={!row.dirty || saving === row.key}
-          className="shrink-0 mt-1 flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-        >
-          <Save size={12} />
-          {saving === row.key ? '...' : 'שמור'}
-        </button>
+      <div key={row.key} className={`py-3 border-b border-white/5 last:border-0 ${isVisual ? '' : 'flex items-start gap-3'}`}>
+        {isVisual ? (
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-sm text-gray-400">{settingLabels[row.key] ?? row.key}</div>
+              <button
+                onClick={() => handleSave(row)}
+                disabled={!row.dirty || saving === row.key}
+                className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+              >
+                <Save size={12} />
+                {saving === row.key ? '...' : 'שמור'}
+              </button>
+            </div>
+            {renderField(row)}
+          </>
+        ) : (
+          <>
+            <div className="w-44 shrink-0 pt-2">
+              <div className="text-sm text-gray-400">{settingLabels[row.key] ?? row.key}</div>
+            </div>
+            <div className="flex-1">
+              {renderField(row)}
+            </div>
+            <button
+              onClick={() => handleSave(row)}
+              disabled={!row.dirty || saving === row.key}
+              className="shrink-0 mt-1 flex items-center gap-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+            >
+              <Save size={12} />
+              {saving === row.key ? '...' : 'שמור'}
+            </button>
+          </>
+        )}
       </div>
     )
   }

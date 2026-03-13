@@ -87,6 +87,9 @@ const seedData: Record<string, unknown[]> = {
     { key: 'contact_phone', value: '' },
     // Navbar & Footer
     { key: 'navbar_links', value: JSON.stringify([{ label: 'מסלול', href: '#syllabus' }, { label: 'פרויקטים', href: '#projects' }, { label: 'הצוות', href: '#team' }, { label: 'יצירת קשר', href: '#contact' }]) },
+    { key: 'navbar_popup_title', value: 'עדיין לא רשום?' },
+    { key: 'navbar_popup_subtitle', value: 'בוא נמצא את המסלול שלך' },
+    { key: 'navbar_popup_icon', value: '✨' },
     { key: 'footer_text', value: 'Nextli וייבקוד. כל הזכויות שמורות.' },
     // FOMO
     { key: 'fomo_banner_active', value: 'true' },

@@ -139,10 +139,14 @@ export function LandingNavbar({ user, profile, settings }: Props) {
                           onClick={() => setPopupOpen(false)}
                           className="flex items-center gap-3 px-5 py-4 text-gray-300 hover:bg-white/5 hover:text-white transition-colors"
                         >
-                          <Sparkles size={18} className="text-purple-400 shrink-0" />
+                          {settings.navbar_popup_icon ? (
+                            <span className="text-lg shrink-0">{settings.navbar_popup_icon}</span>
+                          ) : (
+                            <Sparkles size={18} className="text-purple-400 shrink-0" />
+                          )}
                           <div>
-                            <div className="font-semibold text-sm">עדיין לא רשום?</div>
-                            <div className="text-xs text-gray-400 mt-0.5">בוא נמצא את המסלול שלך</div>
+                            <div className="font-semibold text-sm">{settings.navbar_popup_title || 'עדיין לא רשום?'}</div>
+                            <div className="text-xs text-gray-400 mt-0.5">{settings.navbar_popup_subtitle || 'בוא נמצא את המסלול שלך'}</div>
                           </div>
                         </Link>
                       </motion.div>

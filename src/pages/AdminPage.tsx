@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 import { SEOHead } from '@/components/shared/SEOHead'
 import {
   LayoutDashboard, Users, GraduationCap, Home, Settings, Menu,
-  ChevronDown, ClipboardCheck, Search, X,
+  ChevronDown, ClipboardCheck, Search, X, Monitor,
 } from 'lucide-react'
 import { getSettingsSearchIndex } from '@/components/admin/SettingsManager'
 
@@ -14,6 +14,7 @@ const WizardManager = lazy(() => import('@/components/admin/WizardManager').then
 const CoursesManager = lazy(() => import('@/components/admin/CoursesManager').then(m => ({ default: m.CoursesManager })))
 const SettingsManager = lazy(() => import('@/components/admin/SettingsManager').then(m => ({ default: m.SettingsManager })))
 const LandingPageSettings = lazy(() => import('@/components/admin/SettingsManager').then(m => ({ default: m.LandingPageSettings })))
+const StudentAreaSettings = lazy(() => import('@/components/admin/SettingsManager').then(m => ({ default: m.StudentAreaSettings })))
 const SystemHealthCheck = lazy(() => import('@/components/admin/SystemHealthCheck').then(m => ({ default: m.SystemHealthCheck })))
 const LandingManager = lazy(() => import('@/components/admin/LandingManager').then(m => ({ default: m.LandingManager })))
 const WaitlistManager = lazy(() => import('@/components/admin/WaitlistManager').then(m => ({ default: m.WaitlistManager })))
@@ -73,6 +74,14 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    id: 'student-area',
+    label: 'אזור תלמידים',
+    icon: <Monitor size={18} />,
+    children: [
+      { id: 'student-settings', label: 'טקסטים והגדרות' },
+    ],
+  },
+  {
     id: 'settings',
     label: 'הגדרות כלליות',
     icon: <Settings size={18} />,
@@ -110,7 +119,7 @@ function buildSearchIndex(): SearchResult[] {
       label: entry.label,
       sectionTitle: entry.sectionTitle,
       sectionIcon: entry.sectionIcon,
-      navigateTo: entry.mode === 'landing' ? 'landing-settings' : 'settings',
+      navigateTo: entry.mode === 'landing' ? 'landing-settings' : entry.mode === 'student' ? 'student-settings' : 'settings',
     })
   }
 
@@ -165,6 +174,38 @@ function PrepTabWrapper() {
   )
 }
 
+// ── Student area wrapper with preview links ──────────────────────────────
+
+const STUDENT_PREVIEWS = [
+  { label: 'אזור למידה', href: '/workspace', icon: '📖' },
+  { label: 'שאלון קבלה', href: '/onboarding', icon: '👋' },
+  { label: 'טופס הרשמה', href: '/intake', icon: '📝' },
+  { label: 'הכנה לקורס', href: '/prep', icon: '🎯' },
+]
+
+function StudentAreaWithPreviews() {
+  return (
+    <div>
+      <div dir="rtl" className="mb-6 flex flex-wrap gap-2">
+        {STUDENT_PREVIEWS.map(p => (
+          <a
+            key={p.href}
+            href={p.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <span>{p.icon}</span>
+            <span>{p.label}</span>
+            <span className="text-[10px] text-gray-600">↗</span>
+          </a>
+        ))}
+      </div>
+      <StudentAreaSettings />
+    </div>
+  )
+}
+
 // ── Content renderer ─────────────────────────────────────────────────────────
 
 function renderContent(activeId: string) {
@@ -177,6 +218,7 @@ function renderContent(activeId: string) {
     case 'notes':            return <NotesViewer />
     case 'manage':           return <CoursesManager />
     case 'prep':             return <PrepTabWrapper />
+    case 'student-settings': return <StudentAreaWithPreviews />
     case 'landing-settings': return <LandingPageSettings />
     case 'landing-content':  return <LandingManager />
     case 'prompt-showcase':  return <PromptShowcaseManager />

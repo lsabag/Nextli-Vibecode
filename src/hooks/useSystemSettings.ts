@@ -64,6 +64,38 @@ const DEFAULT_SETTINGS: SystemSettingsMap = {
   // ── Footer ──
   footer_text: 'Nextli וייבקוד. כל הזכויות שמורות.',
 
+  // ── Student Workspace ──
+  ws_sidebar_logo:           'Nextli: וייבקוד',
+  ws_search_placeholder:     'חפש בתוכן, פרומפטים והערות...',
+  ws_panel_content:          'תוכן',
+  ws_panel_prompts:          'פרומפטים',
+  ws_panel_notes:            'הפנקס שלי',
+  ws_notes_placeholder:      'כתוב כאן את ההערות שלך... הן נשמרות אוטומטית',
+  ws_notes_export:           'ייצא כטקסט',
+  ws_locked_title:           'תוכן נעול',
+  ws_locked_detail:          'יפתח בהמשך הקורס',
+  ws_coming_soon:            'התוכן יתווסף בקרוב',
+  ws_reveal_later:           'יחשף בהמשך השיעור',
+  ws_prompts_empty:          'אין פרומפטים למפגש זה עדיין',
+  ws_feedback_heading:       'פידבק על המפגש',
+  ws_feedback_desc:          'שתפו אותנו — מה הבנתם ומה חסר לכם',
+  ws_feedback_learned:       'מה למדתי במפגש הזה?',
+  ws_feedback_missing:       'מה חסר לי? מה לא הבנתי?',
+  ws_no_courses:             'אין קורסים פעילים',
+  ws_ai_mentor_soon:         'ה-AI Mentor יהיה זמין בקרוב. עד אז — שאל בצ\'אט של קלוד!',
+
+  // ── Onboarding ──
+  ws_onboarding_heading:     'בואו נכיר אותך',
+  ws_onboarding_done_title:  'תודה שמילאת!',
+  ws_onboarding_done_text:   'קיבלנו את התשובות שלך. אנחנו שמחים שהצטרפת! עכשיו בואו נתחיל ללמוד.',
+  ws_onboarding_done_cta:    'לאזור הלמידה',
+
+  // ── Prep page ──
+  ws_prep_heading:           'הכנה לקורס',
+  ws_prep_desc:              'כדי שנוכל להתחיל ישר לבנות במפגש הראשון, יש כמה דברים שחשוב לסדר מראש. סמנו V על כל שלב שסיימתם.',
+  ws_prep_done:              'כל שלבי החובה הושלמו!',
+  ws_prep_cta:               'מוכנים! בואו נתחיל',
+
   // ── FOMO ──
   fomo_banner_active: 'false',
   fomo_text: '',

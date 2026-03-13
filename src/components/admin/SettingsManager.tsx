@@ -53,6 +53,34 @@ const settingLabels: Record<string, string> = {
   // Footer
   footer_text:         'טקסט זכויות יוצרים',
 
+  // Student workspace
+  ws_sidebar_logo:       'לוגו סיידבר',
+  ws_search_placeholder: 'טקסט חיפוש (placeholder)',
+  ws_panel_content:      'טאב: תוכן',
+  ws_panel_prompts:      'טאב: פרומפטים',
+  ws_panel_notes:        'טאב: הפנקס שלי',
+  ws_notes_placeholder:  'טקסט הערות (placeholder)',
+  ws_notes_export:       'כפתור ייצוא הערות',
+  ws_locked_title:       'כותרת תוכן נעול',
+  ws_locked_detail:      'פירוט תוכן נעול',
+  ws_coming_soon:        'טקסט "בקרוב"',
+  ws_reveal_later:       'טקסט "יחשף בהמשך"',
+  ws_prompts_empty:      'טקסט אין פרומפטים',
+  ws_feedback_heading:   'כותרת פידבק',
+  ws_feedback_desc:      'תיאור פידבק',
+  ws_feedback_learned:   'שאלה: מה למדתי',
+  ws_feedback_missing:   'שאלה: מה חסר',
+  ws_no_courses:         'טקסט אין קורסים',
+  ws_ai_mentor_soon:     'טקסט AI Mentor בקרוב',
+  ws_onboarding_heading:   'כותרת שאלון',
+  ws_onboarding_done_title: 'כותרת סיום שאלון',
+  ws_onboarding_done_text:  'טקסט סיום שאלון',
+  ws_onboarding_done_cta:   'כפתור סיום שאלון',
+  ws_prep_heading:       'כותרת הכנה',
+  ws_prep_desc:          'תיאור הכנה',
+  ws_prep_done:          'טקסט השלמת הכנה',
+  ws_prep_cta:           'כפתור המשך',
+
   // Other
   ai_mentor_active:    'AI Mentor (פעיל/כבוי)',
 }
@@ -103,6 +131,40 @@ const LANDING_SECTIONS: Section[] = [
   },
 ]
 
+// Student workspace sections — organized by student-facing page
+const STUDENT_SECTIONS: Section[] = [
+  {
+    title: 'סיידבר + כללי',
+    icon: '📋',
+    keys: ['ws_sidebar_logo', 'ws_search_placeholder', 'ws_panel_content', 'ws_panel_prompts', 'ws_panel_notes', 'ws_no_courses', 'ws_ai_mentor_soon'],
+  },
+  {
+    title: 'תוכן מפגש',
+    icon: '📖',
+    keys: ['ws_locked_title', 'ws_locked_detail', 'ws_coming_soon', 'ws_reveal_later', 'ws_prompts_empty'],
+  },
+  {
+    title: 'הערות תלמידים',
+    icon: '📝',
+    keys: ['ws_notes_placeholder', 'ws_notes_export'],
+  },
+  {
+    title: 'פידבק על מפגש',
+    icon: '💬',
+    keys: ['ws_feedback_heading', 'ws_feedback_desc', 'ws_feedback_learned', 'ws_feedback_missing'],
+  },
+  {
+    title: 'שאלון קבלה (Onboarding)',
+    icon: '👋',
+    keys: ['ws_onboarding_heading', 'ws_onboarding_done_title', 'ws_onboarding_done_text', 'ws_onboarding_done_cta'],
+  },
+  {
+    title: 'הכנה לקורס',
+    icon: '🎯',
+    keys: ['ws_prep_heading', 'ws_prep_desc', 'ws_prep_done', 'ws_prep_cta'],
+  },
+]
+
 const GENERAL_SECTIONS: Section[] = [
   {
     title: 'כללי',
@@ -111,7 +173,7 @@ const GENERAL_SECTIONS: Section[] = [
   },
 ]
 
-const ALL_SECTIONS = [...LANDING_SECTIONS, ...GENERAL_SECTIONS]
+const ALL_SECTIONS = [...LANDING_SECTIONS, ...STUDENT_SECTIONS, ...GENERAL_SECTIONS]
 
 const TOGGLE_KEYS = new Set(['ai_mentor_active'])
 const VISUAL_JSON_KEYS = new Set(['hero_features', 'syllabus_badges', 'navbar_links'])
@@ -134,7 +196,7 @@ export type SettingSearchEntry = {
   label: string
   sectionTitle: string
   sectionIcon: string
-  mode: 'landing' | 'general'
+  mode: 'landing' | 'general' | 'student'
 }
 
 /** Returns a flat list of all settings with their section info, for use in admin search */
@@ -143,6 +205,11 @@ export function getSettingsSearchIndex(): SettingSearchEntry[] {
   for (const section of LANDING_SECTIONS) {
     for (const key of section.keys) {
       entries.push({ key, label: settingLabels[key] ?? key, sectionTitle: section.title, sectionIcon: section.icon, mode: 'landing' })
+    }
+  }
+  for (const section of STUDENT_SECTIONS) {
+    for (const key of section.keys) {
+      entries.push({ key, label: settingLabels[key] ?? key, sectionTitle: section.title, sectionIcon: section.icon, mode: 'student' })
     }
   }
   for (const section of GENERAL_SECTIONS) {
@@ -623,6 +690,11 @@ function SettingsRenderer({ sections, title, defaultCollapsed = false }: Setting
 /** Landing page settings — organized by page section (Header → Footer) */
 export function LandingPageSettings() {
   return <SettingsRenderer sections={LANDING_SECTIONS} title="הגדרות דף הבית" defaultCollapsed />
+}
+
+/** Student area settings — workspace, onboarding, prep page texts */
+export function StudentAreaSettings() {
+  return <SettingsRenderer sections={STUDENT_SECTIONS} title="אזור תלמידים — טקסטים" defaultCollapsed />
 }
 
 /** General / non-landing settings */

@@ -3,8 +3,6 @@ import { Calendar, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const HE_DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
 const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
-const HOUR_PRESETS = ['17:00', '18:00', '19:00', '20:00', '21:00', '22:00']
-const HALF_PRESETS = ['17:30', '18:30', '19:30', '20:30', '21:30', '22:30']
 
 type Props = {
   /** ISO string or empty string */
@@ -13,13 +11,9 @@ type Props = {
   onChange?: (iso: string) => void
   /** Hide time selection (date only) */
   dateOnly?: boolean
-  /** Custom full-hour presets */
-  hourPresets?: string[]
-  /** Custom half-hour presets */
-  halfPresets?: string[]
 }
 
-export default function DateTimePicker({ value = '', onChange, dateOnly, hourPresets = HOUR_PRESETS, halfPresets = HALF_PRESETS }: Props) {
+export default function DateTimePicker({ value = '', onChange, dateOnly }: Props) {
   const now = new Date()
   const selected = value ? new Date(value) : null
 
@@ -126,30 +120,24 @@ export default function DateTimePicker({ value = '', onChange, dateOnly, hourPre
         </div>
       </div>
 
-      {/* Time pills */}
+      {/* Time dropdown */}
       {!dateOnly && (
         <div>
           <p className="text-[9px] text-gray-500 mb-1 flex items-center gap-1"><Clock size={8} /> שעה</p>
-          <div className="flex gap-px mb-px">
-            {hourPresets.map(t => (
-              <button key={t} onClick={() => selectTime(t)}
-                className={`text-[10px] flex-1 py-0.5 rounded font-mono transition-all ${
-                  selectedTime === t && !customTime ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-                }`}>{t}</button>
+          <select
+            value={selectedTime}
+            onChange={e => selectTime(e.target.value)}
+            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-white font-mono outline-none focus:border-blue-500/50 transition-colors appearance-none cursor-pointer"
+            dir="ltr"
+          >
+            {Array.from({ length: 48 }, (_, i) => {
+              const h = String(Math.floor(i / 2)).padStart(2, '0')
+              const m = i % 2 === 0 ? '00' : '30'
+              return `${h}:${m}`
+            }).map(t => (
+              <option key={t} value={t}>{t}</option>
             ))}
-          </div>
-          <div className="flex gap-px">
-            {halfPresets.map(t => (
-              <button key={t} onClick={() => selectTime(t)}
-                className={`text-[10px] flex-1 py-0.5 rounded font-mono transition-all ${
-                  selectedTime === t && !customTime ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'
-                }`}>{t}</button>
-            ))}
-            <input type="time" value={customTime ? selectedTime : ''}
-              onChange={e => { setCustomTime(true); selectTime(e.target.value) }}
-              onFocus={() => setCustomTime(true)}
-              className="bg-white/5 border border-white/10 rounded px-1 py-0.5 text-[10px] text-gray-300 font-mono outline-none focus:border-blue-500/50 w-14 shrink-0" dir="ltr" />
-          </div>
+          </select>
         </div>
       )}
 

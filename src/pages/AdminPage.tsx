@@ -21,6 +21,8 @@ const WaitlistManager = lazy(() => import('@/components/admin/WaitlistManager').
 const PrepManager = lazy(() => import('@/components/admin/PrepManager').then(m => ({ default: m.PrepManager })))
 const NotesViewer = lazy(() => import('@/components/admin/NotesViewer').then(m => ({ default: m.NotesViewer })))
 const PromptShowcaseManager = lazy(() => import('@/components/admin/PromptShowcaseManager').then(m => ({ default: m.PromptShowcaseManager })))
+const IntakeManager = lazy(() => import('@/components/admin/IntakeManager').then(m => ({ default: m.IntakeManager })))
+const FeedbackViewer = lazy(() => import('@/components/admin/FeedbackViewer').then(m => ({ default: m.FeedbackViewer })))
 const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 
 // ── Navigation structure ─────────────────────────────────────────────────────
@@ -78,6 +80,13 @@ const navItems: NavItem[] = [
     label: 'אזור תלמידים',
     icon: <Monitor size={18} />,
     children: [
+      { id: 'student-overview', label: 'סקירה כללית' },
+      { id: 'student-workspace', label: 'אזור למידה' },
+      { id: 'student-wizard', label: 'שאלון קבלה' },
+      { id: 'student-intake', label: 'טופס הרשמה' },
+      { id: 'student-intake-questions', label: 'שאלות הטופס' },
+      { id: 'student-prep', label: 'הכנה לקורס' },
+      { id: 'student-feedback', label: 'פידבק תלמידים' },
       { id: 'student-settings', label: 'טקסטים והגדרות' },
     ],
   },
@@ -209,21 +218,22 @@ function PrepTabWrapper() {
 
 // ── Student area wrapper with preview links ──────────────────────────────
 
-function useStudentPages() {
-  const [firstCourseId, setFirstCourseId] = useState<string | null>(null)
-  useEffect(() => {
-    supabase.from('courses').select('id').order('display_order', { ascending: true }).limit(1)
-      .then(({ data }: { data: { id: string }[] | null }) => {
-        if (data?.[0]) setFirstCourseId(data[0].id)
-      })
-  }, [])
-  return [
-    { label: 'אזור למידה', desc: 'הממשק הראשי של התלמיד — מפגשים, תוכן, הערות', href: '/workspace', icon: '📖', color: 'blue' },
-    { label: 'שאלון קבלה', desc: 'שאלון הכרות לתלמידים חדשים לפני הכניסה', href: '/onboarding', icon: '👋', color: 'purple' },
-    { label: 'טופס הרשמה', desc: 'דף נחיתה להרשמה — שם, אימייל, טלפון', href: '/intake', icon: '📝', color: 'green' },
-    { label: 'הכנה לקורס', desc: 'משימות הכנה לפני תחילת הקורס', href: firstCourseId ? `/preparation/${firstCourseId}` : null, icon: '🎯', color: 'amber' },
-  ]
+type StudentPageCard = {
+  label: string
+  desc: string
+  previewHref: string | null
+  adminTab: string
+  icon: string
+  color: string
 }
+
+const STUDENT_CARDS: Omit<StudentPageCard, 'previewHref'>[] = [
+  { label: 'אזור למידה', desc: 'הממשק הראשי של התלמיד — מפגשים, תוכן, הערות', adminTab: 'student-workspace', icon: '📖', color: 'blue' },
+  { label: 'שאלון קבלה', desc: 'שאלון הכרות לתלמידים חדשים לפני הכניסה', adminTab: 'student-wizard', icon: '👋', color: 'purple' },
+  { label: 'טופס הרשמה', desc: 'נרשמים + עריכת שאלות הטופס', adminTab: 'student-intake', icon: '📝', color: 'green' },
+  { label: 'הכנה לקורס', desc: 'משימות הכנה לפני תחילת הקורס', adminTab: 'student-prep', icon: '🎯', color: 'amber' },
+  { label: 'פידבק תלמידים', desc: 'דירוגים וחוות דעת על מפגשים', adminTab: 'student-feedback', icon: '💬', color: 'purple' },
+]
 
 const previewColors: Record<string, { bg: string; border: string; hover: string }> = {
   blue:   { bg: 'bg-blue-500/5',   border: 'border-blue-500/20', hover: 'hover:border-blue-500/40 hover:bg-blue-500/10' },
@@ -232,39 +242,65 @@ const previewColors: Record<string, { bg: string; border: string; hover: string 
   amber:  { bg: 'bg-amber-500/5',  border: 'border-amber-500/20', hover: 'hover:border-amber-500/40 hover:bg-amber-500/10' },
 }
 
-function StudentAreaWithPreviews() {
-  const studentPages = useStudentPages()
+function StudentAreaOverview({ onNavigate }: { onNavigate: (tab: string) => void }) {
+  const [firstCourseId, setFirstCourseId] = useState<string | null>(null)
+  useEffect(() => {
+    supabase.from('courses').select('id').order('display_order', { ascending: true }).limit(1)
+      .then(({ data }: { data: { id: string }[] | null }) => {
+        if (data?.[0]) setFirstCourseId(data[0].id)
+      })
+  }, [])
+
+  const previewHrefs: Record<string, string | null> = {
+    'student-workspace': '/workspace',
+    'student-wizard': '/onboarding',
+    'student-intake': '/intake',
+    'student-prep': firstCourseId ? `/preparation/${firstCourseId}` : null,
+    'student-feedback': null,
+  }
+
   return (
     <div dir="rtl">
-      {/* Header */}
       <div className="mb-8">
         <h2 className="text-xl font-bold text-white mb-1">אזור תלמידים</h2>
-        <p className="text-sm text-gray-500">ניהול טקסטים, הגדרות ותצוגה מקדימה של כל העמודים שהתלמיד רואה</p>
+        <p className="text-sm text-gray-500">ניהול כל העמודים שהתלמיד רואה — לחצו על כרטיס כדי לנהל את התוכן</p>
       </div>
 
-      {/* Preview cards grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-        {studentPages.map(p => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
+        {STUDENT_CARDS.map(p => {
           const c = previewColors[p.color] ?? previewColors.blue
-          const disabled = !p.href
-          const Tag = disabled ? 'div' : 'a'
+          const preview = previewHrefs[p.adminTab]
           return (
-            <Tag
-              key={p.label}
-              {...(disabled ? {} : { href: p.href!, target: '_blank', rel: 'noopener noreferrer' })}
-              className={`group relative ${c.bg} border ${c.border} ${disabled ? 'opacity-50 cursor-not-allowed' : c.hover} rounded-xl p-4 transition-all duration-200`}
+            <button
+              key={p.adminTab}
+              onClick={() => onNavigate(p.adminTab)}
+              className={`group relative text-right ${c.bg} border ${c.border} ${c.hover} rounded-xl p-4 transition-all duration-200`}
             >
               <div className="flex items-center gap-2.5 mb-2">
                 <span className="text-xl">{p.icon}</span>
                 <span className="text-sm font-semibold text-white">{p.label}</span>
-                {!disabled && (
-                  <svg className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 mr-auto transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <span className="mr-auto flex items-center gap-1.5">
+                  {preview && (
+                    <a
+                      href={preview}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="text-gray-600 hover:text-blue-400 transition-colors"
+                      title="תצוגה מקדימה"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  )}
+                  <svg className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                   </svg>
-                )}
+                </span>
               </div>
               <p className="text-[11px] text-gray-500 leading-relaxed">{p.desc}</p>
-            </Tag>
+            </button>
           )
         })}
       </div>
@@ -276,7 +312,6 @@ function StudentAreaWithPreviews() {
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
-      {/* Settings accordion */}
       <StudentAreaSettings />
     </div>
   )
@@ -284,22 +319,29 @@ function StudentAreaWithPreviews() {
 
 // ── Content renderer ─────────────────────────────────────────────────────────
 
-function renderContent(activeId: string) {
+function renderContent(activeId: string, onNavigate: (tab: string) => void) {
   switch (activeId) {
-    case 'dashboard':        return <AdminDashboard />
-    case 'health':           return <SystemHealthCheck />
-    case 'waitlist':         return <WaitlistManager />
-    case 'insights':         return <StudentInsights />
-    case 'wizard':           return <WizardManager />
-    case 'notes':            return <NotesViewer />
-    case 'manage':           return <CoursesManager />
-    case 'prep':             return <PrepTabWrapper />
-    case 'student-settings': return <StudentAreaWithPreviews />
-    case 'landing-settings': return <LandingPageSettings />
-    case 'landing-content':  return <LandingManager />
-    case 'prompt-showcase':  return <PromptShowcaseManager />
-    case 'settings':         return <SettingsManager />
-    default:                 return <AdminDashboard />
+    case 'dashboard':         return <AdminDashboard />
+    case 'health':            return <SystemHealthCheck />
+    case 'waitlist':          return <WaitlistManager />
+    case 'insights':          return <StudentInsights />
+    case 'wizard':            return <WizardManager />
+    case 'notes':             return <NotesViewer />
+    case 'manage':            return <CoursesManager />
+    case 'prep':              return <PrepTabWrapper />
+    case 'student-overview':          return <StudentAreaOverview onNavigate={onNavigate} />
+    case 'student-workspace':         return <StudentAreaSettings />
+    case 'student-wizard':            return <WizardManager />
+    case 'student-intake':            return <WaitlistManager />
+    case 'student-intake-questions':  return <IntakeManager />
+    case 'student-prep':              return <PrepTabWrapper />
+    case 'student-feedback':          return <FeedbackViewer />
+    case 'student-settings':          return <StudentAreaSettings />
+    case 'landing-settings':  return <LandingPageSettings />
+    case 'landing-content':   return <LandingManager />
+    case 'prompt-showcase':   return <PromptShowcaseManager />
+    case 'settings':          return <SettingsManager />
+    default:                  return <AdminDashboard />
   }
 }
 
@@ -570,7 +612,7 @@ export default function AdminPage() {
       <main className="flex-1 overflow-y-auto h-screen" id="main-content">
         <div className="max-w-6xl mx-auto p-4 md:p-8 pt-16 md:pt-8">
           <Suspense fallback={<div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>}>
-            {renderContent(activeId)}
+            {renderContent(activeId, navigate)}
           </Suspense>
         </div>
       </main>

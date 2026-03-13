@@ -1,80 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { SEOHead } from '@/components/shared/SEOHead'
 import { IntakeResult } from '@/components/intake/IntakeResult'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
 
-export type IntakeAnswers = {
-  tech_level: string
-  ai_experience: string
-  goal: string
-  english_level: string
-  availability: string
-}
+export type IntakeAnswers = Record<string, string>
 
 type Question = {
-  id: keyof IntakeAnswers
+  id: string
   title: string
   subtitle: string
   options: { value: string; label: string; description: string }[]
 }
-
-const questions: Question[] = [
-  {
-    id: 'tech_level',
-    title: 'מה הניסיון שלך עם טכנולוגיה?',
-    subtitle: 'זה יעזור לנו להתאים את הקצב והעומק',
-    options: [
-      { value: 'beginner', label: 'משתמש בסיסי', description: 'אימייל, וורד, אקסל — בלי רקע בפיתוח' },
-      { value: 'familiar', label: 'מכיר קצת', description: 'בניתי אתר ב-Wix/WordPress או שיחקתי עם קוד' },
-      { value: 'junior', label: 'מתכנת מתחיל', description: 'יודע HTML/CSS, קצת JavaScript' },
-      { value: 'experienced', label: 'מפתח עם ניסיון', description: 'עובד עם React / frameworks' },
-    ],
-  },
-  {
-    id: 'ai_experience',
-    title: 'מה הניסיון שלך עם AI?',
-    subtitle: 'כלי AI הם הבסיס של הקורס',
-    options: [
-      { value: 'none', label: 'אין ניסיון', description: 'לא יודע/ת מה זה בדיוק' },
-      { value: 'basic', label: 'שיחקתי קצת', description: 'ניסיתי ChatGPT או כלים דומים' },
-      { value: 'regular', label: 'משתמש באופן קבוע', description: 'משתמש/ת ב-AI לעבודה או ללימודים' },
-      { value: 'coding', label: 'כותב קוד עם AI', description: 'Copilot, Cursor, Claude Code — חלק מהשגרה' },
-    ],
-  },
-  {
-    id: 'goal',
-    title: 'מה אתה רוצה לבנות?',
-    subtitle: 'נתאים את הפרויקטים למטרות שלך',
-    options: [
-      { value: 'website', label: 'אתר לעסק', description: 'דף נחיתה, אתר תדמית, או בלוג' },
-      { value: 'ecommerce', label: 'חנות / מערכת הזמנות', description: 'מכירה אונליין, ניהול לקוחות' },
-      { value: 'app', label: 'אפליקציה / מוצר טכנולוגי', description: 'מוצר עם משתמשים, דאטה, ולוגיקה עסקית' },
-      { value: 'explore', label: 'רוצה ללמוד', description: 'עדיין לא יודע/ת — רוצה לגלות את האפשרויות' },
-    ],
-  },
-  {
-    id: 'english_level',
-    title: 'מה רמת האנגלית שלך?',
-    subtitle: 'רוב כלי הפיתוח וה-AI עובדים באנגלית',
-    options: [
-      { value: 'basic', label: 'בסיסית', description: 'קשה לי לקרוא טקסטים באנגלית' },
-      { value: 'moderate', label: 'בינונית', description: 'מבין/ה טקסט כתוב, פחות טכני' },
-      { value: 'good', label: 'טובה', description: 'קורא/ת תיעוד טכני בלי בעיה' },
-      { value: 'fluent', label: 'שוטפת', description: 'אנגלית שפת עבודה יומיומית' },
-    ],
-  },
-  {
-    id: 'availability',
-    title: 'כמה זמן בשבוע אתה מוכן להשקיע?',
-    subtitle: 'מעבר למפגשים החיים',
-    options: [
-      { value: 'low', label: '1-2 שעות', description: 'צפייה בחומר + תרגול בסיסי' },
-      { value: 'medium', label: '3-5 שעות', description: 'תרגילים + פרויקט אישי' },
-      { value: 'high', label: '5+ שעות', description: 'רוצה להתעמק ולבנות דברים אמיתיים' },
-    ],
-  },
-]
 
 export function computeLevel(answers: IntakeAnswers): 'beginner' | 'intermediate' | 'advanced' {
   let score = 0
@@ -102,12 +40,47 @@ export function computeLevel(answers: IntakeAnswers): 'beginner' | 'intermediate
 }
 
 export default function IntakePage() {
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [loadingQuestions, setLoadingQuestions] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<Partial<IntakeAnswers>>({})
   const [done, setDone] = useState(false)
 
+  useEffect(() => {
+    supabase.from('intake_questions').select('*').order('display_order', { ascending: true }).eq('is_active', true)
+      .then(({ data }: { data: { id: string; field_key: string; title: string; subtitle: string; options: string }[] | null }) => {
+        if (data && data.length > 0) {
+          setQuestions(data.map(q => ({
+            id: q.field_key,
+            title: q.title,
+            subtitle: q.subtitle,
+            options: (() => { try { return JSON.parse(q.options) } catch { return [] } })(),
+          })))
+        }
+        setLoadingQuestions(false)
+      })
+  }, [])
+
   const question = questions[currentIndex]
-  const progress = ((currentIndex + (answers[question?.id] ? 1 : 0)) / questions.length) * 100
+  const progress = questions.length > 0 ? ((currentIndex + (question && answers[question?.id] ? 1 : 0)) / questions.length) * 100 : 0
+
+  if (loadingQuestions) {
+    return (
+      <main id="main-content" className="min-h-screen bg-[#0a0a0f] flex items-center justify-center" dir="rtl">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </main>
+    )
+  }
+
+  if (questions.length === 0) {
+    return (
+      <main id="main-content" className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-4" dir="rtl">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 max-w-md w-full text-center">
+          <p className="text-gray-400 text-sm">הטופס עוד לא הוגדר</p>
+        </div>
+      </main>
+    )
+  }
 
   function selectOption(value: string) {
     const updated = { ...answers, [question.id]: value }
@@ -127,7 +100,8 @@ export default function IntakePage() {
     if (currentIndex > 0) setCurrentIndex(prev => prev - 1)
   }
 
-  if (done && answers.tech_level && answers.ai_experience && answers.goal && answers.english_level && answers.availability) {
+  const allAnswered = done && questions.every(q => answers[q.id])
+  if (allAnswered) {
     return <IntakeResult answers={answers as IntakeAnswers} onRestart={() => { setAnswers({}); setCurrentIndex(0); setDone(false) }} />
   }
 

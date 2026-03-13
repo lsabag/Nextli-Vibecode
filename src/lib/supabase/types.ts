@@ -451,6 +451,37 @@ export type Database = {
         }
         Relationships: []
       }
+      intake_questions: {
+        Row: {
+          id: string
+          field_key: string
+          title: string
+          subtitle: string
+          options: string
+          display_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          field_key: string
+          title: string
+          subtitle?: string
+          options: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          field_key?: string
+          title?: string
+          subtitle?: string
+          options?: string
+          display_order?: number
+          is_active?: boolean
+        }
+        Relationships: []
+      }
       session_feedback: {
         Row: {
           id: string

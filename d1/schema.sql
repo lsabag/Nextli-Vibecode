@@ -209,6 +209,19 @@ CREATE TABLE IF NOT EXISTS prep_checklist (
   FOREIGN KEY (session_id) REFERENCES course_sessions(id) ON DELETE SET NULL
 );
 
+-- ─── intake_questions ──────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS intake_questions (
+  id TEXT PRIMARY KEY,
+  field_key TEXT NOT NULL,
+  title TEXT NOT NULL,
+  subtitle TEXT NOT NULL DEFAULT '',
+  options TEXT NOT NULL DEFAULT '[]',
+  display_order INTEGER NOT NULL DEFAULT 0,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ─── session_feedback ───────────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS session_feedback (
@@ -237,3 +250,4 @@ CREATE INDEX IF NOT EXISTS idx_content_progress_content ON content_progress(cont
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_prep_checklist_course ON prep_checklist(course_id);
 CREATE INDEX IF NOT EXISTS idx_session_feedback_user_session ON session_feedback(user_id, session_id);
+CREATE INDEX IF NOT EXISTS idx_intake_questions_order ON intake_questions(display_order);

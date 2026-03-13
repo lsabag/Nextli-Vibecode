@@ -121,6 +121,37 @@ const seedData: Record<string, unknown[]> = {
   content_progress: [],
   notifications: [],
   waitlist: [],
+  intake_questions: [
+    { id: 'iq-001', field_key: 'tech_level', title: 'מה הניסיון שלך עם טכנולוגיה?', subtitle: 'זה יעזור לנו להתאים את הקצב והעומק', options: JSON.stringify([
+      { value: 'beginner', label: 'משתמש בסיסי', description: 'אימייל, וורד, אקסל — בלי רקע בפיתוח' },
+      { value: 'familiar', label: 'מכיר קצת', description: 'בניתי אתר ב-Wix/WordPress או שיחקתי עם קוד' },
+      { value: 'junior', label: 'מתכנת מתחיל', description: 'יודע HTML/CSS, קצת JavaScript' },
+      { value: 'experienced', label: 'מפתח עם ניסיון', description: 'עובד עם React / frameworks' },
+    ]), display_order: 0, is_active: true, created_at: '2026-01-01T00:00:00Z' },
+    { id: 'iq-002', field_key: 'ai_experience', title: 'מה הניסיון שלך עם AI?', subtitle: 'כלי AI הם הבסיס של הקורס', options: JSON.stringify([
+      { value: 'none', label: 'אין ניסיון', description: 'לא יודע/ת מה זה בדיוק' },
+      { value: 'basic', label: 'שיחקתי קצת', description: 'ניסיתי ChatGPT או כלים דומים' },
+      { value: 'regular', label: 'משתמש באופן קבוע', description: 'משתמש/ת ב-AI לעבודה או ללימודים' },
+      { value: 'coding', label: 'כותב קוד עם AI', description: 'Copilot, Cursor, Claude Code — חלק מהשגרה' },
+    ]), display_order: 1, is_active: true, created_at: '2026-01-01T00:00:00Z' },
+    { id: 'iq-003', field_key: 'goal', title: 'מה אתה רוצה לבנות?', subtitle: 'נתאים את הפרויקטים למטרות שלך', options: JSON.stringify([
+      { value: 'website', label: 'אתר לעסק', description: 'דף נחיתה, אתר תדמית, או בלוג' },
+      { value: 'ecommerce', label: 'חנות / מערכת הזמנות', description: 'מכירה אונליין, ניהול לקוחות' },
+      { value: 'app', label: 'אפליקציה / מוצר טכנולוגי', description: 'מוצר עם משתמשים, דאטה, ולוגיקה עסקית' },
+      { value: 'explore', label: 'רוצה ללמוד', description: 'עדיין לא יודע/ת — רוצה לגלות את האפשרויות' },
+    ]), display_order: 2, is_active: true, created_at: '2026-01-01T00:00:00Z' },
+    { id: 'iq-004', field_key: 'english_level', title: 'מה רמת האנגלית שלך?', subtitle: 'רוב כלי הפיתוח וה-AI עובדים באנגלית', options: JSON.stringify([
+      { value: 'basic', label: 'בסיסית', description: 'קשה לי לקרוא טקסטים באנגלית' },
+      { value: 'moderate', label: 'בינונית', description: 'מבין/ה טקסט כתוב, פחות טכני' },
+      { value: 'good', label: 'טובה', description: 'קורא/ת תיעוד טכני בלי בעיה' },
+      { value: 'fluent', label: 'שוטפת', description: 'אנגלית שפת עבודה יומיומית' },
+    ]), display_order: 3, is_active: true, created_at: '2026-01-01T00:00:00Z' },
+    { id: 'iq-005', field_key: 'availability', title: 'כמה זמן בשבוע אתה מוכן להשקיע?', subtitle: 'מעבר למפגשים החיים', options: JSON.stringify([
+      { value: 'low', label: '1-2 שעות', description: 'צפייה בחומר + תרגול בסיסי' },
+      { value: 'medium', label: '3-5 שעות', description: 'תרגילים + פרויקט אישי' },
+      { value: 'high', label: '5+ שעות', description: 'רוצה להתעמק ולבנות דברים אמיתיים' },
+    ]), display_order: 4, is_active: true, created_at: '2026-01-01T00:00:00Z' },
+  ],
   prep_checklist: [
     { id: 'prep-001', course_id: MOCK_COURSE_ID, session_id: 'session-001', title: 'פתיחת חשבון ב-Lovable', description: 'הירשמו דרך הקישור שלנו — שנינו מקבלים 10 קרדיטים בחינם. חשוב: אל תשתמשו בקרדיטים לפני הקורס!', link_url: 'https://lovable.dev/invite/NK2MOR2', link_label: 'הרשמה ל-Lovable', links: null, display_order: 0, is_required: true, is_active: true, created_at: '2026-01-01T00:00:00Z' },
     { id: 'prep-002', course_id: MOCK_COURSE_ID, session_id: 'session-001', title: 'דפדפן Chrome מעודכן', description: 'ודאו שמותקן לכם Google Chrome בגרסה העדכנית — זה הדפדפן הכי מתאים לעבודה.', link_url: 'https://www.google.com/chrome/', link_label: 'הורדת Chrome', links: null, display_order: 1, is_required: true, is_active: true, created_at: '2026-01-01T00:00:00Z' },

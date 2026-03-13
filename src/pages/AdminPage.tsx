@@ -87,7 +87,6 @@ const navItems: NavItem[] = [
       { id: 'student-intake-questions', label: 'שאלות הטופס' },
       { id: 'student-prep', label: 'הכנה לקורס' },
       { id: 'student-feedback', label: 'פידבק תלמידים' },
-      { id: 'student-settings', label: 'טקסטים והגדרות' },
     ],
   },
   {
@@ -133,7 +132,7 @@ function buildSearchIndex(site?: SiteContent): SearchResult[] {
 
   // Settings entries (with live values)
   for (const entry of getSettingsSearchIndex()) {
-    const navigateTo = entry.mode === 'landing' ? 'landing-settings' : entry.mode === 'student' ? 'student-settings' : 'settings'
+    const navigateTo = entry.mode === 'landing' ? 'landing-settings' : entry.mode === 'student' ? 'student-workspace' : 'settings'
     const val = site?.settings[entry.key]
     results.push({
       label: entry.label,
@@ -336,7 +335,6 @@ function renderContent(activeId: string, onNavigate: (tab: string) => void) {
     case 'student-intake-questions':  return <IntakeManager />
     case 'student-prep':              return <PrepTabWrapper />
     case 'student-feedback':          return <FeedbackViewer />
-    case 'student-settings':          return <StudentAreaSettings />
     case 'landing-settings':  return <LandingPageSettings />
     case 'landing-content':   return <LandingManager />
     case 'prompt-showcase':   return <PromptShowcaseManager />

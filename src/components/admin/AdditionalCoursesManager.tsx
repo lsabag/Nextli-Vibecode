@@ -5,7 +5,18 @@ import {
   deleteAdditionalCourse,
 } from '@/lib/supabase/queries/admin'
 import type { AdditionalCourse } from '@/types'
-import { Plus, Trash2, Save, GripVertical } from 'lucide-react'
+import { Plus, Trash2, Save, GripVertical, Link2 } from 'lucide-react'
+
+const BADGE_COLORS: { id: string; label: string; cls: string }[] = [
+  { id: 'purple', label: 'סגול',  cls: 'bg-purple-600' },
+  { id: 'blue',   label: 'כחול',  cls: 'bg-blue-600' },
+  { id: 'green',  label: 'ירוק',  cls: 'bg-green-600' },
+  { id: 'amber',  label: 'ענבר',  cls: 'bg-amber-500' },
+  { id: 'red',    label: 'אדום',  cls: 'bg-red-600' },
+  { id: 'pink',   label: 'ורוד',  cls: 'bg-pink-600' },
+  { id: 'teal',   label: 'ים',    cls: 'bg-teal-600' },
+  { id: 'gray',   label: 'אפור',  cls: 'bg-gray-600' },
+]
 
 function blankCourse(order: number): Omit<AdditionalCourse, 'created_at'> {
   return {
@@ -13,7 +24,10 @@ function blankCourse(order: number): Omit<AdditionalCourse, 'created_at'> {
     title: '',
     description: '',
     badge: 'בקרוב',
+    badge_color: 'purple',
     rating: '5.0',
+    show_rating: true,
+    image_url: null,
     display_order: order,
     is_active: true,
   }
@@ -96,56 +110,117 @@ export function AdditionalCoursesManager() {
           )}
           {courses.map(course => (
             <div key={course.id} className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-3">
-              <div className="flex items-center gap-3">
-                <GripVertical size={16} className="text-gray-600 flex-shrink-0" />
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input
-                    value={course.title}
-                    onChange={e => update(course.id, { title: e.target.value })}
-                    placeholder="שם הקורס"
-                    className={inputCls}
-                    dir="rtl"
-                  />
-                  <input
-                    value={course.description}
-                    onChange={e => update(course.id, { description: e.target.value })}
-                    placeholder="תיאור קצר"
-                    className={inputCls}
-                    dir="rtl"
-                  />
-                  <input
-                    value={course.badge}
-                    onChange={e => update(course.id, { badge: e.target.value })}
-                    placeholder="תווית (בקרוב, חדש...)"
-                    className={inputCls}
-                    dir="rtl"
-                  />
-                  <div className="flex gap-2">
+              <div className="flex items-start gap-3">
+                <GripVertical size={16} className="text-gray-600 flex-shrink-0 mt-3" />
+                <div className="flex-1 space-y-3">
+                  {/* Row 1: Title + Description */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      value={course.title}
+                      onChange={e => update(course.id, { title: e.target.value })}
+                      placeholder="שם הקורס"
+                      className={inputCls}
+                      dir="rtl"
+                    />
+                    <input
+                      value={course.description}
+                      onChange={e => update(course.id, { description: e.target.value })}
+                      placeholder="תיאור קצר"
+                      className={inputCls}
+                      dir="rtl"
+                    />
+                  </div>
+
+                  {/* Row 2: Badge + Badge color */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <input
+                      value={course.badge}
+                      onChange={e => update(course.id, { badge: e.target.value })}
+                      placeholder="תווית (בקרוב, חדש...)"
+                      className={`${inputCls} w-40`}
+                      dir="rtl"
+                    />
+                    <span className="text-[10px] text-gray-500 shrink-0">צבע:</span>
+                    {BADGE_COLORS.map(c => (
+                      <button
+                        key={c.id}
+                        onClick={() => update(course.id, { badge_color: c.id })}
+                        title={c.label}
+                        className={`w-5 h-5 rounded-md ${c.cls} transition-all duration-150 ${
+                          (course.badge_color || 'purple') === c.id
+                            ? 'ring-2 ring-white ring-offset-1 ring-offset-[#0a0a0f] scale-110'
+                            : 'opacity-40 hover:opacity-70'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Row 3: Rating + Order + Toggles */}
+                  <div className="flex items-center gap-3 flex-wrap">
                     <input
                       value={course.rating}
                       onChange={e => update(course.id, { rating: e.target.value })}
                       placeholder="דירוג (4.9)"
-                      className={`${inputCls} w-28`}
+                      className={`${inputCls} w-24`}
                       dir="ltr"
                     />
+                    <label className="flex items-center gap-1.5 text-xs text-gray-400 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={course.show_rating !== false}
+                        onChange={e => update(course.id, { show_rating: e.target.checked })}
+                        className="accent-blue-500 w-3 h-3"
+                      />
+                      הצג כוכבים
+                    </label>
                     <input
                       type="number"
                       value={course.display_order}
                       onChange={e => update(course.id, { display_order: Number(e.target.value) })}
                       placeholder="סדר"
-                      className={`${inputCls} w-24`}
+                      className={`${inputCls} w-20`}
                     />
-                    <label className="flex items-center gap-1.5 text-sm text-gray-400 whitespace-nowrap">
+                    <label className="flex items-center gap-1.5 text-xs text-gray-400 whitespace-nowrap">
                       <input
                         type="checkbox"
                         checked={course.is_active}
                         onChange={e => update(course.id, { is_active: e.target.checked })}
-                        className="accent-blue-500"
+                        className="accent-blue-500 w-3 h-3"
                       />
                       פעיל
                     </label>
                   </div>
+
+                  {/* Row 4: Image URL */}
+                  <div className="flex items-center gap-2">
+                    <Link2 size={12} className="text-gray-600 shrink-0" />
+                    <input
+                      type="text"
+                      value={course.image_url ?? ''}
+                      onChange={e => update(course.id, { image_url: e.target.value || null })}
+                      placeholder="URL לתמונה (הדבק לינק חיצוני)"
+                      className={`${inputCls} text-xs`}
+                      dir="ltr"
+                    />
+                    <a
+                      href="https://imgur.com/upload"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-blue-400 hover:text-blue-300 shrink-0 whitespace-nowrap transition-colors"
+                    >
+                      העלה ל-Imgur
+                    </a>
+                  </div>
+
+                  {/* Image preview */}
+                  {course.image_url && (
+                    <div className="w-full h-24 bg-white/5 rounded-lg overflow-hidden">
+                      <img src={course.image_url} alt={course.title || 'preview'} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                 </div>
+
+                {/* Actions */}
                 <div className="flex flex-col gap-1.5 flex-shrink-0">
                   <button
                     onClick={() => handleSave(course)}

@@ -254,7 +254,10 @@ export type Database = {
           title: string
           description: string
           badge: string
+          badge_color: string
           rating: string
+          show_rating: boolean
+          image_url: string | null
           display_order: number
           is_active: boolean
           created_at: string
@@ -264,7 +267,10 @@ export type Database = {
           title: string
           description: string
           badge?: string
+          badge_color?: string
           rating?: string
+          show_rating?: boolean
+          image_url?: string | null
           display_order?: number
           is_active?: boolean
           created_at?: string
@@ -273,7 +279,10 @@ export type Database = {
           title?: string
           description?: string
           badge?: string
+          badge_color?: string
           rating?: string
+          show_rating?: boolean
+          image_url?: string | null
           display_order?: number
           is_active?: boolean
         }

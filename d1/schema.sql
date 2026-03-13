@@ -123,7 +123,10 @@ CREATE TABLE IF NOT EXISTS additional_courses (
   title TEXT NOT NULL,
   description TEXT NOT NULL DEFAULT '',
   badge TEXT NOT NULL DEFAULT '',
+  badge_color TEXT NOT NULL DEFAULT 'purple',
   rating TEXT NOT NULL DEFAULT '',
+  show_rating INTEGER NOT NULL DEFAULT 1,
+  image_url TEXT,
   display_order INTEGER NOT NULL DEFAULT 0,
   is_active INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))

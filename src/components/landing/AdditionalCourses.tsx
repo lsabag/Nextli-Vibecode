@@ -5,6 +5,17 @@ import type { AdditionalCourse, SystemSettingsMap } from '@/types'
 
 type Props = { settings: SystemSettingsMap }
 
+const BADGE_STYLES: Record<string, { bg: string; text: string }> = {
+  purple: { bg: 'bg-purple-600/30', text: 'text-purple-400' },
+  blue:   { bg: 'bg-blue-600/30',   text: 'text-blue-400' },
+  green:  { bg: 'bg-green-600/30',  text: 'text-green-400' },
+  amber:  { bg: 'bg-amber-500/30',  text: 'text-amber-400' },
+  red:    { bg: 'bg-red-600/30',    text: 'text-red-400' },
+  pink:   { bg: 'bg-pink-600/30',   text: 'text-pink-400' },
+  teal:   { bg: 'bg-teal-600/30',   text: 'text-teal-400' },
+  gray:   { bg: 'bg-gray-600/30',   text: 'text-gray-400' },
+}
+
 export function AdditionalCourses({ settings }: Props) {
   const [courses, setCourses] = useState<AdditionalCourse[]>([])
 
@@ -29,28 +40,41 @@ export function AdditionalCourses({ settings }: Props) {
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {courses.map((course, i) => (
-          <motion.div
-            key={course.id}
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-blue-500/40 transition-colors"
-          >
-            <div className="w-full h-32 bg-white/5 rounded-xl mb-5 flex items-center justify-center">
-              <span className="text-4xl" aria-hidden="true">🎓</span>
-            </div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-yellow-400 text-sm">★ {course.rating}</span>
-              <span className="bg-purple-600/30 text-purple-400 text-xs px-2 py-0.5 rounded-full">
-                {course.badge}
-              </span>
-            </div>
-            <h3 className="text-white font-bold text-lg mb-2">{course.title}</h3>
-            <p className="text-gray-400 text-sm">{course.description}</p>
-          </motion.div>
-        ))}
+        {courses.map((course, i) => {
+          const badgeStyle = BADGE_STYLES[course.badge_color] ?? BADGE_STYLES.purple
+          const showRating = course.show_rating !== false && course.rating
+
+          return (
+            <motion.div
+              key={course.id}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-blue-500/40 transition-colors"
+            >
+              <div className="w-full h-32 bg-white/5 rounded-xl mb-5 flex items-center justify-center overflow-hidden">
+                {course.image_url ? (
+                  <img src={course.image_url} alt={course.title} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-4xl" aria-hidden="true">🎓</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between mb-2">
+                {showRating && (
+                  <span className="text-yellow-400 text-sm">★ {course.rating}</span>
+                )}
+                {course.badge && (
+                  <span className={`${badgeStyle.bg} ${badgeStyle.text} text-xs px-2 py-0.5 rounded-full ${!showRating ? 'mr-auto' : ''}`}>
+                    {course.badge}
+                  </span>
+                )}
+              </div>
+              <h3 className="text-white font-bold text-lg mb-2">{course.title}</h3>
+              <p className="text-gray-400 text-sm">{course.description}</p>
+            </motion.div>
+          )
+        })}
       </div>
     </section>
   )

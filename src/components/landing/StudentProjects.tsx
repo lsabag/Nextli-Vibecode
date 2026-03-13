@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import type { SystemSettingsMap } from '@/types'
 
 // Placeholder project cards — space reserved for student-built apps
 const placeholderProjects = [
@@ -7,7 +8,9 @@ const placeholderProjects = [
   { number: 3 },
 ]
 
-export function StudentProjects() {
+type Props = { settings: SystemSettingsMap }
+
+export function StudentProjects({ settings }: Props) {
   return (
     <section id="projects" className="max-w-7xl mx-auto px-6 py-20" dir="rtl" aria-labelledby="projects-heading">
       <motion.div
@@ -16,8 +19,8 @@ export function StudentProjects() {
         viewport={{ once: true }}
         className="text-center mb-14"
       >
-        <h2 id="projects-heading" className="text-4xl font-black text-white mb-3">הפרויקטים של התלמידים</h2>
-        <p className="text-gray-400">הפרויקטים שנבנו בתוכנית — כל מפגש מסתיים בפרודקט אמיתי</p>
+        <h2 id="projects-heading" className="text-4xl font-black text-white mb-3">{settings.projects_heading || 'הפרויקטים של התלמידים'}</h2>
+        <p className="text-gray-400">{settings.projects_subheading || 'הפרויקטים שנבנו בתוכנית — כל מפגש מסתיים בפרודקט אמיתי'}</p>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

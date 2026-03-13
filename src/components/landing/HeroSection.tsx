@@ -9,12 +9,17 @@ type Props = {
   profile: UserProfile | null
 }
 
-const featureCards = [
+const defaultFeatureCards = [
   { icon: '⚡', label: 'AI-First Development', desc: 'בונים עם AI מהיום הראשון' },
   { icon: '🛠️', label: 'Vibe Coding Matrix', desc: 'מתודולוגיה ייחודית שלנו' },
   { icon: '🚀', label: 'Ship in 3 Sessions', desc: 'מוצר אמיתי תוך שבועיים' },
   { icon: '💬', label: 'Prompt Engineering', desc: 'לדבר עם AI ב-Spec & Prompt' },
 ]
+
+function parseJSON<T>(json: string | undefined, fallback: T): T {
+  if (!json) return fallback
+  try { return JSON.parse(json) } catch { return fallback }
+}
 
 function getPersonalAreaRoute(profile: UserProfile | null): string {
   if (profile?.role === 'admin') return '/admin'
@@ -25,6 +30,9 @@ function getPersonalAreaRoute(profile: UserProfile | null): string {
 export function HeroSection({ settings, user, profile }: Props) {
   const isLoggedIn = !!user
   const ctaRoute = isLoggedIn ? getPersonalAreaRoute(profile) : '/intake'
+  const featureCards = parseJSON(settings.hero_features, defaultFeatureCards)
+  const badgeText = settings.hero_badge_text || 'סטודיו אינטנסיבי (hands-on) — Vibe Coding'
+  const badgeLink = settings.hero_badge_link || ''
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden" dir="rtl" aria-labelledby="hero-heading">
@@ -57,16 +65,33 @@ export function HeroSection({ settings, user, profile }: Props) {
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.05, duration: 0.45 }}
-          className="inline-flex items-center gap-2.5 rounded-full px-5 py-2 mb-8 border"
-          style={{
-            background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(124,58,237,0.12))',
-            borderColor: 'rgba(99,102,241,0.35)',
-          }}
         >
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-          <span className="text-blue-300 text-sm font-bold tracking-wide">
-            סטודיו אינטנסיבי (hands-on) — Vibe Coding
-          </span>
+          {badgeLink ? (
+            <a
+              href={badgeLink}
+              target={badgeLink.startsWith('http') ? '_blank' : undefined}
+              rel={badgeLink.startsWith('http') ? 'noopener noreferrer' : undefined}
+              className="inline-flex items-center gap-2.5 rounded-full px-5 py-2 mb-8 border hover:scale-[1.03] transition-transform"
+              style={{
+                background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(124,58,237,0.12))',
+                borderColor: 'rgba(99,102,241,0.35)',
+              }}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <span className="text-blue-300 text-sm font-bold tracking-wide">{badgeText}</span>
+            </a>
+          ) : (
+            <div
+              className="inline-flex items-center gap-2.5 rounded-full px-5 py-2 mb-8 border"
+              style={{
+                background: 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(124,58,237,0.12))',
+                borderColor: 'rgba(99,102,241,0.35)',
+              }}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              <span className="text-blue-300 text-sm font-bold tracking-wide">{badgeText}</span>
+            </div>
+          )}
         </motion.div>
 
         {/* Main headline */}
@@ -124,7 +149,7 @@ export function HeroSection({ settings, user, profile }: Props) {
             <span className="relative z-10">
               {isLoggedIn
                 ? 'אזור האישי שלי'
-                : 'הצטרף עכשיו'
+                : (settings.hero_cta_primary || 'הצטרף עכשיו')
               }
             </span>
             <span
@@ -139,7 +164,7 @@ export function HeroSection({ settings, user, profile }: Props) {
             className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-lg text-gray-300 hover:text-white transition-all hover:bg-white/10"
             style={{ border: '1px solid rgba(255,255,255,0.15)' }}
           >
-            ראה את המסלול
+            {settings.hero_cta_secondary || 'ראה את המסלול'}
           </a>
         </motion.div>
 

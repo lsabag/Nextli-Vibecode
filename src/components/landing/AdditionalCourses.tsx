@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { getAdditionalCourses } from '@/lib/supabase/queries/landing'
-import type { AdditionalCourse } from '@/types'
+import type { AdditionalCourse, SystemSettingsMap } from '@/types'
 
-export function AdditionalCourses() {
+type Props = { settings: SystemSettingsMap }
+
+export function AdditionalCourses({ settings }: Props) {
   const [courses, setCourses] = useState<AdditionalCourse[]>([])
 
   useEffect(() => {
@@ -22,8 +24,8 @@ export function AdditionalCourses() {
         viewport={{ once: true }}
         className="mb-14"
       >
-        <h2 id="additional-courses-heading" className="text-4xl font-black text-white mb-2">קורסים נוספים</h2>
-        <p className="text-gray-400">המשך הדרך — עוד כלים, עוד מוצרים</p>
+        <h2 id="additional-courses-heading" className="text-4xl font-black text-white mb-2">{settings.courses_heading || 'קורסים נוספים'}</h2>
+        <p className="text-gray-400">{settings.courses_subheading || 'המשך הדרך — עוד כלים, עוד מוצרים'}</p>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

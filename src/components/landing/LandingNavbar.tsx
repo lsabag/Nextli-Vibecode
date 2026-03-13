@@ -4,11 +4,24 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, LogIn, Sparkles } from 'lucide-react'
 import { useFocusTrap } from '@/hooks/useFocusTrap'
 import type { AuthUser } from '@/lib/supabase/client'
-import type { UserProfile } from '@/types'
+import type { UserProfile, SystemSettingsMap } from '@/types'
 
 type Props = {
   user: AuthUser | null
   profile: UserProfile | null
+  settings: SystemSettingsMap
+}
+
+const defaultNavLinks = [
+  { label: 'מסלול', href: '#syllabus' },
+  { label: 'פרויקטים', href: '#projects' },
+  { label: 'הצוות', href: '#team' },
+  { label: 'יצירת קשר', href: '#contact' },
+]
+
+function parseJSON<T>(json: string | undefined, fallback: T): T {
+  if (!json) return fallback
+  try { return JSON.parse(json) } catch { return fallback }
 }
 
 function getPersonalAreaRoute(profile: UserProfile | null): string {
@@ -17,7 +30,7 @@ function getPersonalAreaRoute(profile: UserProfile | null): string {
   return '/workspace'
 }
 
-export function LandingNavbar({ user, profile }: Props) {
+export function LandingNavbar({ user, profile, settings }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [popupOpen, setPopupOpen] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
@@ -47,12 +60,7 @@ export function LandingNavbar({ user, profile }: Props) {
     return () => document.removeEventListener('keydown', handleKey)
   }, [popupOpen])
 
-  const navLinks = [
-    { label: 'מסלול', href: '#syllabus' },
-    { label: 'פרויקטים', href: '#projects' },
-    { label: 'הצוות', href: '#team' },
-    { label: 'יצירת קשר', href: '#contact' },
-  ]
+  const navLinks = parseJSON(settings.navbar_links, defaultNavLinks)
 
   return (
     <>

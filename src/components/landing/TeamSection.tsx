@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { getTeamMembers } from '@/lib/supabase/queries/landing'
-import type { TeamMember } from '@/types'
+import type { TeamMember, SystemSettingsMap } from '@/types'
 
-export function TeamSection() {
+type Props = { settings: SystemSettingsMap }
+
+export function TeamSection({ settings }: Props) {
   const [team, setTeam] = useState<TeamMember[]>([])
 
   useEffect(() => {
@@ -22,8 +24,8 @@ export function TeamSection() {
         viewport={{ once: true }}
         className="text-center mb-14"
       >
-        <h2 id="team-heading" className="text-4xl font-black text-white mb-3">הנבחרת שלנו</h2>
-        <p className="text-gray-400">אנשים שבנו מוצרים אמיתיים — ועכשיו מלמדים אתכם</p>
+        <h2 id="team-heading" className="text-4xl font-black text-white mb-3">{settings.team_heading || 'הנבחרת שלנו'}</h2>
+        <p className="text-gray-400">{settings.team_subheading || 'אנשים שבנו מוצרים אמיתיים — ועכשיו מלמדים אתכם'}</p>
       </motion.div>
 
       <div className="flex flex-wrap justify-center gap-8">

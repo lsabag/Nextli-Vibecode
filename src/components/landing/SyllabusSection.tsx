@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { getPublicCourseSessions } from '@/lib/supabase/queries/landing'
-import type { CourseSession } from '@/types'
+import type { CourseSession, SystemSettingsMap } from '@/types'
 
-const sessionIcons: Record<number, string> = { 1: '🎯', 2: '⚙️', 3: '🚀' }
-const sessionBadges: Record<number, string> = {
-  1: 'Kickoff',
-  2: 'Deep Dive',
-  3: 'Launch',
+const defaultBadges: Record<string, { icon: string; badge: string }> = {
+  '1': { icon: '🎯', badge: 'Kickoff' },
+  '2': { icon: '⚙️', badge: 'Deep Dive' },
+  '3': { icon: '🚀', badge: 'Launch' },
 }
 
-export function SyllabusSection() {
+function parseJSON<T>(json: string | undefined, fallback: T): T {
+  if (!json) return fallback
+  try { return JSON.parse(json) } catch { return fallback }
+}
+
+type Props = { settings: SystemSettingsMap }
+
+export function SyllabusSection({ settings }: Props) {
   const [sessions, setSessions] = useState<CourseSession[]>([])
   const [loading, setLoading] = useState(true)
+  const badges = parseJSON(settings.syllabus_badges, defaultBadges)
 
   useEffect(() => {
     getPublicCourseSessions()
@@ -28,8 +35,8 @@ export function SyllabusSection() {
         viewport={{ once: true }}
         className="text-center mb-14"
       >
-        <h2 id="syllabus-heading" className="text-4xl font-black text-white mb-3">מסלול ה-המראה שלך</h2>
-        <p className="text-gray-400">שלושה מפגשים אינטנסיביים — מאפס לפרודקשן</p>
+        <h2 id="syllabus-heading" className="text-4xl font-black text-white mb-3">{settings.syllabus_heading || 'מסלול ה-המראה שלך'}</h2>
+        <p className="text-gray-400">{settings.syllabus_subheading || 'שלושה מפגשים אינטנסיביים — מאפס לפרודקשן'}</p>
       </motion.div>
 
       {loading ? (
@@ -40,28 +47,31 @@ export function SyllabusSection() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {sessions.map((session, i) => (
-            <motion.div
-              key={session.id}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-3xl" aria-hidden="true">{sessionIcons[session.session_number]}</span>
-                <span className="bg-blue-600/30 text-blue-400 text-xs font-bold px-3 py-1 rounded-full">
-                  {sessionBadges[session.session_number]}
-                </span>
-              </div>
-              <div className="text-gray-400 text-xs font-semibold mb-2 uppercase tracking-wider">
-                מפגש {session.session_number}
-              </div>
-              <h3 className="text-white font-bold text-xl mb-3">{session.title}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{session.description}</p>
-            </motion.div>
-          ))}
+          {sessions.map((session, i) => {
+            const b = badges[String(session.session_number)] || defaultBadges[String(session.session_number)]
+            return (
+              <motion.div
+                key={session.id}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white/5 border border-white/10 rounded-2xl p-7 hover:bg-white/8 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-3xl" aria-hidden="true">{b?.icon}</span>
+                  <span className="bg-blue-600/30 text-blue-400 text-xs font-bold px-3 py-1 rounded-full">
+                    {b?.badge}
+                  </span>
+                </div>
+                <div className="text-gray-400 text-xs font-semibold mb-2 uppercase tracking-wider">
+                  מפגש {session.session_number}
+                </div>
+                <h3 className="text-white font-bold text-xl mb-3">{session.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{session.description}</p>
+              </motion.div>
+            )
+          })}
         </div>
       )}
     </section>

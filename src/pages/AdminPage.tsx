@@ -213,7 +213,7 @@ export default function AdminPage() {
     item.children?.some(c => c.id === activeId) ?? false
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex" dir="rtl">
+    <div className="h-screen bg-[#0a0a0f] flex overflow-hidden" dir="rtl">
       <SEOHead title="לוח ניהול" noindex />
 
       {/* Mobile hamburger */}
@@ -234,10 +234,10 @@ export default function AdminPage() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — fixed width, full height, no scroll with content */}
       <aside className={`
-        fixed inset-y-0 right-0 z-50 w-60 bg-[#0d0d14] border-l border-white/10 flex flex-col
-        transition-transform duration-300 md:relative md:translate-x-0
+        fixed inset-y-0 right-0 z-50 w-60 bg-[#0d0d14] border-l border-white/10 flex flex-col shrink-0
+        transition-transform duration-300 md:sticky md:top-0 md:h-screen md:translate-x-0
         ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}
       `}>
         {/* Logo */}
@@ -322,8 +322,8 @@ export default function AdminPage() {
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto" id="main-content">
+      {/* Main content — scrolls independently */}
+      <main className="flex-1 overflow-y-auto h-screen" id="main-content">
         <div className="max-w-6xl mx-auto p-4 md:p-8 pt-16 md:pt-8">
           <Suspense fallback={<div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>}>
             {renderContent(activeId)}

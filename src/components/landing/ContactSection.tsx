@@ -49,9 +49,9 @@ export function ContactSection({ settings }: Props) {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
         >
-          <h2 id="contact-heading" className="text-4xl font-black text-white mb-6">בואו נדבר</h2>
+          <h2 id="contact-heading" className="text-4xl font-black text-white mb-6">{settings.contact_heading || 'בואו נדבר'}</h2>
           <p className="text-gray-400 mb-8 leading-relaxed">
-            יש שאלות? רוצים לדעת עוד לפני שנרשמים? אנחנו כאן.
+            {settings.contact_description || 'יש שאלות? רוצים לדעת עוד לפני שנרשמים? אנחנו כאן.'}
           </p>
 
           <address className="space-y-4 not-italic">
@@ -88,7 +88,7 @@ export function ContactSection({ settings }: Props) {
           {sent ? (
             <div className="text-center py-8" role="alert">
               <div className="text-4xl mb-4" aria-hidden="true">&#x2705;</div>
-              <p className="text-white font-semibold">ההודעה נשלחה! נחזור אליך בקרוב.</p>
+              <p className="text-white font-semibold">{settings.contact_success || 'ההודעה נשלחה! נחזור אליך בקרוב.'}</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4" aria-label="טופס יצירת קשר">

@@ -28,21 +28,21 @@ export default function LandingPage() {
           ctaLink={settings.fomo_cta_link || undefined}
         />
       )}
-      <LandingNavbar user={user} profile={profile} />
+      <LandingNavbar user={user} profile={profile} settings={settings} />
       <main id="main-content">
       <HeroSection
         settings={settings}
         user={user}
         profile={profile}
       />
-      <SyllabusSection />
+      <SyllabusSection settings={settings} />
       <PromptHelperPreview />
-      <StudentProjects />
-      <AdditionalCourses />
-      <TeamSection />
+      <StudentProjects settings={settings} />
+      <AdditionalCourses settings={settings} />
+      <TeamSection settings={settings} />
       <ContactSection settings={settings} />
       </main>
-      <LandingFooter />
+      <LandingFooter settings={settings} />
     </div>
   )
 }

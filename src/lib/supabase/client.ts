@@ -52,17 +52,50 @@ const seedData: Record<string, unknown[]> = {
     { id: 'content-012', session_id: 'session-002', content_type: 'rich_text', title: 'סיכום', content: '<p>כל הכבוד! סיימתם את המפגש השני.</p>', language: null, display_order: 2, is_locked: false, file_url: null, created_at: '2026-01-02T00:00:00Z' },
   ],
   system_settings: [
-    { key: 'hero_headline', value: 'למד לבנות אתרים עם AI' },
-    { key: 'hero_subheadline', value: 'קורס אינטנסיבי לפיתוח עם וייבקוד' },
-    { key: 'hero_description', value: 'בנה אתרים ואפליקציות מלאים בעזרת כלי AI מתקדמים — ללא ניסיון קודם בתכנות.' },
-    { key: 'contact_email', value: 'info@nextli.co.il' },
-    { key: 'contact_phone', value: '050-1234567' },
+    // Hero
+    { key: 'hero_headline', value: 'מרעיון למוצר' },
+    { key: 'hero_subheadline', value: 'תוך 3 מפגשים' },
+    { key: 'hero_description', value: 'לומדים לבנות מוצרים דיגיטליים אמיתיים עם AI — בלי ניסיון קודם בקוד' },
+    { key: 'hero_badge_text', value: 'סטודיו אינטנסיבי (hands-on) — Vibe Coding' },
+    { key: 'hero_badge_link', value: '' },
+    { key: 'hero_cta_primary', value: 'הצטרף עכשיו' },
+    { key: 'hero_cta_secondary', value: 'ראה את המסלול' },
+    { key: 'hero_features', value: JSON.stringify([
+      { icon: '⚡', label: 'AI-First Development', desc: 'בונים עם AI מהיום הראשון' },
+      { icon: '🛠️', label: 'Vibe Coding Matrix', desc: 'מתודולוגיה ייחודית שלנו' },
+      { icon: '🚀', label: 'Ship in 3 Sessions', desc: 'מוצר אמיתי תוך שבועיים' },
+      { icon: '💬', label: 'Prompt Engineering', desc: 'לדבר עם AI ב-Spec & Prompt' },
+    ]) },
+    // Syllabus
+    { key: 'syllabus_heading', value: 'מסלול ה-המראה שלך' },
+    { key: 'syllabus_subheading', value: 'שלושה מפגשים אינטנסיביים — מאפס לפרודקשן' },
+    { key: 'syllabus_badges', value: JSON.stringify({ '1': { icon: '🎯', badge: 'Kickoff' }, '2': { icon: '⚙️', badge: 'Deep Dive' }, '3': { icon: '🚀', badge: 'Launch' } }) },
+    // Projects
+    { key: 'projects_heading', value: 'הפרויקטים של התלמידים' },
+    { key: 'projects_subheading', value: 'הפרויקטים שנבנו בתוכנית — כל מפגש מסתיים בפרודקט אמיתי' },
+    // Additional Courses
+    { key: 'courses_heading', value: 'קורסים נוספים' },
+    { key: 'courses_subheading', value: 'המשך הדרך — עוד כלים, עוד מוצרים' },
+    // Team
+    { key: 'team_heading', value: 'הנבחרת שלנו' },
+    { key: 'team_subheading', value: 'אנשים שבנו מוצרים אמיתיים — ועכשיו מלמדים אתכם' },
+    // Contact
+    { key: 'contact_heading', value: 'בואו נדבר' },
+    { key: 'contact_description', value: 'יש שאלות? רוצים לדעת עוד לפני שנרשמים? אנחנו כאן.' },
+    { key: 'contact_success', value: 'ההודעה נשלחה! נחזור אליך בקרוב.' },
+    { key: 'contact_email', value: '' },
+    { key: 'contact_phone', value: '' },
+    // Navbar & Footer
+    { key: 'navbar_links', value: JSON.stringify([{ label: 'מסלול', href: '#syllabus' }, { label: 'פרויקטים', href: '#projects' }, { label: 'הצוות', href: '#team' }, { label: 'יצירת קשר', href: '#contact' }]) },
+    { key: 'footer_text', value: 'Nextli וייבקוד. כל הזכויות שמורות.' },
+    // FOMO
     { key: 'fomo_banner_active', value: 'true' },
     { key: 'fomo_text', value: 'מקומות מוגבלים! המחיר עולה בקרוב — הצטרף עכשיו' },
     { key: 'fomo_cta_text', value: 'הצטרף עכשיו' },
     { key: 'fomo_cta_link', value: '/intake' },
     { key: 'fomo_variant', value: 'gradient' },
     { key: 'fomo_end_time', value: '' },
+    // General
     { key: 'ai_mentor_active', value: 'false' },
   ],
   prompts_library: [

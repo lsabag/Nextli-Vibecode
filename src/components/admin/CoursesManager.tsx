@@ -145,7 +145,12 @@ export function CoursesManager() {
             onChange={e => setEditingCourse(prev => prev ? { ...prev, title: e.target.value } : prev)}
             placeholder="שם הקורס"
             className={inputCls}
+            aria-describedby={!editingCourse.title.trim() ? 'course-title-error' : undefined}
+            aria-invalid={!editingCourse.title.trim() || undefined}
           />
+          {!editingCourse.title.trim() && (
+            <p id="course-title-error" className="text-red-400 text-xs">שם הקורס הוא שדה חובה</p>
+          )}
           <textarea
             value={editingCourse.description}
             onChange={e => setEditingCourse(prev => prev ? { ...prev, description: e.target.value } : prev)}

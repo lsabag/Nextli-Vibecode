@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { trackEvent } from '@/lib/analytics'
 import type { SystemSettingsMap, UserProfile } from '@/types'
 import type { AuthUser } from '@/lib/supabase/client'
 
@@ -140,6 +141,7 @@ export function HeroSection({ settings, user, profile }: Props) {
           {/* Primary CTA */}
           <Link
             to={ctaRoute}
+            onClick={() => trackEvent('cta_click', { cta_type: isLoggedIn ? 'personal_area' : 'signup' })}
             className="group relative inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-lg text-white overflow-hidden transition-transform hover:scale-[1.04] active:scale-[0.98]"
             style={{
               background: 'linear-gradient(135deg, #1d4ed8 0%, #6d28d9 100%)',
@@ -161,6 +163,7 @@ export function HeroSection({ settings, user, profile }: Props) {
           {/* Secondary CTA */}
           <a
             href="#syllabus"
+            onClick={() => trackEvent('cta_click', { cta_type: 'view_syllabus' })}
             className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-bold text-lg text-gray-300 hover:text-white transition-all hover:bg-white/10"
             style={{ border: '1px solid rgba(255,255,255,0.15)' }}
           >

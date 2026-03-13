@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabase/client'
 import { Link } from 'react-router-dom'
 import { SEOHead } from '@/components/shared/SEOHead'
+import { trackEvent } from '@/lib/analytics'
 
 type Mode = 'login' | 'signup' | 'setup' | 'change'
 
@@ -55,6 +56,7 @@ export default function LoginPage() {
         const { error: signUpError } = await supabase.auth.signUp({ email, password })
         if (signUpError) throw signUpError
         setSuccessMsg('החשבון נוצר בהצלחה!')
+        trackEvent('sign_up', { method: 'email' })
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (signInError) {

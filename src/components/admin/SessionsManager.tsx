@@ -413,7 +413,12 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
       <div className="space-y-3">
         <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">פרטי המפגש</p>
         <input type="text" value={title} onChange={e => setTitle(e.target.value)}
-          className={inputCls} dir="rtl" placeholder="כותרת המפגש" />
+          className={inputCls} dir="rtl" placeholder="כותרת המפגש"
+          aria-describedby={!title.trim() ? 'session-title-error' : undefined}
+          aria-invalid={!title.trim() || undefined} />
+        {!title.trim() && (
+          <p id="session-title-error" className="text-red-400 text-xs">כותרת המפגש היא שדה חובה</p>
+        )}
         <textarea value={description} onChange={e => setDescription(e.target.value)}
           rows={2} className={`${inputCls} resize-none`} dir="rtl" placeholder="תיאור המפגש" />
         {/* Scheduled date */}

@@ -1,6 +1,7 @@
 import { useState, useId } from 'react'
 import { motion } from 'framer-motion'
 import { Mail, Phone } from 'lucide-react'
+import { trackEvent } from '@/lib/analytics'
 import type { SystemSettingsMap } from '@/types'
 
 type Props = { settings: SystemSettingsMap }
@@ -33,6 +34,7 @@ export function ContactSection({ settings }: Props) {
         throw new Error(data.error || 'שגיאה בשליחה')
       }
       setSent(true)
+      trackEvent('contact_form_submit')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'שגיאה בשליחה')
     } finally {

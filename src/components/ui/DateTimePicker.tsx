@@ -1,8 +1,16 @@
-import { useState } from 'react'
-import { Calendar, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Calendar, Clock, X, ChevronLeft, ChevronRight, Check } from 'lucide-react'
 
 const HE_DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳']
 const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
+
+// Half-hour slots from 09:00 to 21:00
+const TIME_SLOTS = Array.from({ length: 25 }, (_, i) => {
+  const totalMinutes = 9 * 60 + i * 30
+  const h = String(Math.floor(totalMinutes / 60)).padStart(2, '0')
+  const m = String(totalMinutes % 60).padStart(2, '0')
+  return `${h}:${m}`
+})
 
 type Props = {
   /** ISO string or empty string */
@@ -22,7 +30,16 @@ export default function DateTimePicker({ value = '', onChange, dateOnly }: Props
   const [selectedTime, setSelectedTime] = useState(
     selected ? `${String(selected.getHours()).padStart(2, '0')}:${String(selected.getMinutes()).padStart(2, '0')}` : '20:00'
   )
-  const [customTime, setCustomTime] = useState(false)
+  const [timeOpen, setTimeOpen] = useState(false)
+  const timeListRef = useRef<HTMLDivElement>(null)
+  const selectedTimeRef = useRef<HTMLButtonElement>(null)
+
+  // Scroll to selected time when dropdown opens
+  useEffect(() => {
+    if (timeOpen && selectedTimeRef.current) {
+      selectedTimeRef.current.scrollIntoView({ block: 'center', behavior: 'auto' })
+    }
+  }, [timeOpen])
 
   function buildDate(year: number, month: number, day: number, time: string): string {
     const [h, m] = time.split(':').map(Number)
@@ -36,7 +53,7 @@ export default function DateTimePicker({ value = '', onChange, dateOnly }: Props
 
   function selectTime(time: string) {
     setSelectedTime(time)
-    setCustomTime(false)
+    setTimeOpen(false)
     if (selected) {
       onChange?.(buildDate(selected.getFullYear(), selected.getMonth(), selected.getDate(), time))
     }
@@ -120,24 +137,52 @@ export default function DateTimePicker({ value = '', onChange, dateOnly }: Props
         </div>
       </div>
 
-      {/* Time dropdown */}
+      {/* Time picker */}
       {!dateOnly && (
-        <div>
+        <div className="relative">
           <p className="text-[9px] text-gray-500 mb-1 flex items-center gap-1"><Clock size={8} /> שעה</p>
-          <select
-            value={selectedTime}
-            onChange={e => selectTime(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-white font-mono outline-none focus:border-blue-500/50 transition-colors appearance-none cursor-pointer"
+
+          {/* Trigger button */}
+          <button
+            onClick={() => setTimeOpen(v => !v)}
+            className="w-full flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono hover:bg-white/8 focus:border-blue-500/50 outline-none transition-colors"
             dir="ltr"
           >
-            {Array.from({ length: 48 }, (_, i) => {
-              const h = String(Math.floor(i / 2)).padStart(2, '0')
-              const m = i % 2 === 0 ? '00' : '30'
-              return `${h}:${m}`
-            }).map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+            <span>{selectedTime}</span>
+            <Clock size={12} className="text-gray-500" />
+          </button>
+
+          {/* Dropdown */}
+          {timeOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setTimeOpen(false)} />
+              <div className="absolute bottom-full mb-1 left-0 right-0 z-50 bg-[#12121a] border border-white/10 rounded-lg shadow-2xl overflow-hidden">
+                <div ref={timeListRef} className="max-h-48 overflow-y-auto py-1 scrollbar-thin scrollbar-thumb-white/10">
+                  {TIME_SLOTS.map(t => {
+                    const active = t === selectedTime
+                    return (
+                      <button
+                        key={t}
+                        ref={active ? selectedTimeRef : undefined}
+                        onClick={() => selectTime(t)}
+                        className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm font-mono transition-colors ${
+                          active
+                            ? 'bg-blue-600/20 text-blue-400'
+                            : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                        }`}
+                        dir="ltr"
+                      >
+                        <span className="w-4 shrink-0">
+                          {active && <Check size={12} className="text-blue-400" />}
+                        </span>
+                        <span>{t}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 

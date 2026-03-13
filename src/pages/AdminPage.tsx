@@ -105,22 +105,55 @@ for (const item of navItems) {
 
 type SearchResult = {
   label: string
+  /** Optional secondary line — shows the actual value from the site */
+  valuePreview?: string
   sectionTitle: string
   sectionIcon: string
   navigateTo: string // admin tab id
 }
 
-function buildSearchIndex(): SearchResult[] {
+type SiteContent = {
+  settings: Record<string, string>
+  courses: { id: string; title: string; description: string }[]
+  additionalCourses: { id: string; title: string; description: string; badge: string }[]
+  teamMembers: { id: string; name: string; role: string }[]
+}
+
+function buildSearchIndex(site?: SiteContent): SearchResult[] {
   const results: SearchResult[] = []
 
-  // Settings entries
+  // Settings entries (with live values)
   for (const entry of getSettingsSearchIndex()) {
+    const navigateTo = entry.mode === 'landing' ? 'landing-settings' : entry.mode === 'student' ? 'student-settings' : 'settings'
+    const val = site?.settings[entry.key]
     results.push({
       label: entry.label,
+      valuePreview: val ? (val.length > 60 ? val.slice(0, 60) + '…' : val) : undefined,
       sectionTitle: entry.sectionTitle,
       sectionIcon: entry.sectionIcon,
-      navigateTo: entry.mode === 'landing' ? 'landing-settings' : entry.mode === 'student' ? 'student-settings' : 'settings',
+      navigateTo,
     })
+  }
+
+  // Course titles & descriptions
+  if (site?.courses) {
+    for (const c of site.courses) {
+      if (c.title) results.push({ label: c.title, valuePreview: c.description || undefined, sectionTitle: 'קורסים', sectionIcon: '🎓', navigateTo: 'manage' })
+    }
+  }
+
+  // Additional courses
+  if (site?.additionalCourses) {
+    for (const c of site.additionalCourses) {
+      if (c.title) results.push({ label: c.title, valuePreview: c.description || undefined, sectionTitle: 'קורסים נוספים (דף הבית)', sectionIcon: '📚', navigateTo: 'landing-content' })
+    }
+  }
+
+  // Team members
+  if (site?.teamMembers) {
+    for (const m of site.teamMembers) {
+      if (m.name) results.push({ label: m.name, valuePreview: m.role || undefined, sectionTitle: 'חברי צוות (דף הבית)', sectionIcon: '👥', navigateTo: 'landing-content' })
+    }
   }
 
   // Nav pages
@@ -176,31 +209,74 @@ function PrepTabWrapper() {
 
 // ── Student area wrapper with preview links ──────────────────────────────
 
-const STUDENT_PREVIEWS = [
-  { label: 'אזור למידה', href: '/workspace', icon: '📖' },
-  { label: 'שאלון קבלה', href: '/onboarding', icon: '👋' },
-  { label: 'טופס הרשמה', href: '/intake', icon: '📝' },
-  { label: 'הכנה לקורס', href: '/prep', icon: '🎯' },
-]
+function useStudentPages() {
+  const [firstCourseId, setFirstCourseId] = useState<string | null>(null)
+  useEffect(() => {
+    supabase.from('courses').select('id').order('display_order', { ascending: true }).limit(1)
+      .then(({ data }: { data: { id: string }[] | null }) => {
+        if (data?.[0]) setFirstCourseId(data[0].id)
+      })
+  }, [])
+  return [
+    { label: 'אזור למידה', desc: 'הממשק הראשי של התלמיד — מפגשים, תוכן, הערות', href: '/workspace', icon: '📖', color: 'blue' },
+    { label: 'שאלון קבלה', desc: 'שאלון הכרות לתלמידים חדשים לפני הכניסה', href: '/onboarding', icon: '👋', color: 'purple' },
+    { label: 'טופס הרשמה', desc: 'דף נחיתה להרשמה — שם, אימייל, טלפון', href: '/intake', icon: '📝', color: 'green' },
+    { label: 'הכנה לקורס', desc: 'משימות הכנה לפני תחילת הקורס', href: firstCourseId ? `/preparation/${firstCourseId}` : null, icon: '🎯', color: 'amber' },
+  ]
+}
+
+const previewColors: Record<string, { bg: string; border: string; hover: string }> = {
+  blue:   { bg: 'bg-blue-500/5',   border: 'border-blue-500/20', hover: 'hover:border-blue-500/40 hover:bg-blue-500/10' },
+  purple: { bg: 'bg-purple-500/5', border: 'border-purple-500/20', hover: 'hover:border-purple-500/40 hover:bg-purple-500/10' },
+  green:  { bg: 'bg-green-500/5',  border: 'border-green-500/20', hover: 'hover:border-green-500/40 hover:bg-green-500/10' },
+  amber:  { bg: 'bg-amber-500/5',  border: 'border-amber-500/20', hover: 'hover:border-amber-500/40 hover:bg-amber-500/10' },
+}
 
 function StudentAreaWithPreviews() {
+  const studentPages = useStudentPages()
   return (
-    <div>
-      <div dir="rtl" className="mb-6 flex flex-wrap gap-2">
-        {STUDENT_PREVIEWS.map(p => (
-          <a
-            key={p.href}
-            href={p.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <span>{p.icon}</span>
-            <span>{p.label}</span>
-            <span className="text-[10px] text-gray-600">↗</span>
-          </a>
-        ))}
+    <div dir="rtl">
+      {/* Header */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-white mb-1">אזור תלמידים</h2>
+        <p className="text-sm text-gray-500">ניהול טקסטים, הגדרות ותצוגה מקדימה של כל העמודים שהתלמיד רואה</p>
       </div>
+
+      {/* Preview cards grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        {studentPages.map(p => {
+          const c = previewColors[p.color] ?? previewColors.blue
+          const disabled = !p.href
+          const Tag = disabled ? 'div' : 'a'
+          return (
+            <Tag
+              key={p.label}
+              {...(disabled ? {} : { href: p.href!, target: '_blank', rel: 'noopener noreferrer' })}
+              className={`group relative ${c.bg} border ${c.border} ${disabled ? 'opacity-50 cursor-not-allowed' : c.hover} rounded-xl p-4 transition-all duration-200`}
+            >
+              <div className="flex items-center gap-2.5 mb-2">
+                <span className="text-xl">{p.icon}</span>
+                <span className="text-sm font-semibold text-white">{p.label}</span>
+                {!disabled && (
+                  <svg className="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 mr-auto transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-500 leading-relaxed">{p.desc}</p>
+            </Tag>
+          )
+        })}
+      </div>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="h-px flex-1 bg-white/10" />
+        <span className="text-xs text-gray-600 font-medium">טקסטים והגדרות</span>
+        <div className="h-px flex-1 bg-white/10" />
+      </div>
+
+      {/* Settings accordion */}
       <StudentAreaSettings />
     </div>
   )
@@ -236,16 +312,39 @@ export default function AdminPage() {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
+  const [siteContent, setSiteContent] = useState<SiteContent | undefined>()
 
-  const searchIndex = useMemo(() => buildSearchIndex(), [])
+  // Load site content for extended search
+  useEffect(() => {
+    Promise.all([
+      supabase.from('system_settings').select('*'),
+      supabase.from('courses').select('*'),
+      supabase.from('additional_courses').select('*'),
+      supabase.from('team_members').select('*'),
+    ]).then(([settingsRes, coursesRes, addCoursesRes, teamRes]) => {
+      const settings: Record<string, string> = {}
+      for (const row of (settingsRes.data ?? []) as { key: string; value: string }[]) {
+        settings[row.key] = row.value
+      }
+      setSiteContent({
+        settings,
+        courses: (coursesRes.data ?? []) as SiteContent['courses'],
+        additionalCourses: (addCoursesRes.data ?? []) as SiteContent['additionalCourses'],
+        teamMembers: (teamRes.data ?? []) as SiteContent['teamMembers'],
+      })
+    })
+  }, [])
+
+  const searchIndex = useMemo(() => buildSearchIndex(siteContent), [siteContent])
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return []
     const q = searchQuery.trim().toLowerCase()
     return searchIndex.filter(r =>
       r.label.toLowerCase().includes(q) ||
-      r.sectionTitle.toLowerCase().includes(q)
-    ).slice(0, 8)
+      r.sectionTitle.toLowerCase().includes(q) ||
+      (r.valuePreview && r.valuePreview.toLowerCase().includes(q))
+    ).slice(0, 10)
   }, [searchQuery, searchIndex])
 
   // Resolve active page from URL
@@ -354,7 +453,7 @@ export default function AdminPage() {
               onChange={e => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-              placeholder="חיפוש הגדרה..."
+              placeholder="חיפוש טקסט, הגדרה, קורס..."
               className="w-full bg-white/5 border border-white/10 rounded-lg pr-8 pl-3 py-2 text-xs text-white placeholder-gray-600 outline-none focus:border-blue-500/50 transition-colors"
               dir="rtl"
             />
@@ -375,6 +474,9 @@ export default function AdminPage() {
                   className="w-full text-right px-3 py-2.5 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
                 >
                   <div className="text-xs text-white font-medium">{result.label}</div>
+                  {result.valuePreview && (
+                    <div className="text-[10px] text-gray-600 mt-0.5 truncate" dir="rtl">"{result.valuePreview}"</div>
+                  )}
                   <div className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
                     {result.sectionIcon && <span>{result.sectionIcon}</span>}
                     {result.sectionTitle}

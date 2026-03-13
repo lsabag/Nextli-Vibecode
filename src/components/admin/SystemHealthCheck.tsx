@@ -298,6 +298,68 @@ async function runChecks(): Promise<CheckItem[]> {
     })
   }
 
+  // ── Accessibility — images ──────────────────────────────────────────────
+  const acList = (additionalCourses ?? []) as Record<string, unknown>[]
+  const tmList = (teamMembers ?? []) as Record<string, unknown>[]
+
+  // Additional courses with image but no title (= no alt text)
+  for (const c of acList) {
+    if (c.image_url && (!c.title || (c.title as string).trim() === '')) {
+      items.push({
+        id: `a11y-img-course-${c.id}`,
+        category: 'נגישות',
+        label: `קורס נוסף עם תמונה ללא כותרת (= חסר alt)`,
+        severity: 'warn',
+        detail: `לתמונה של קורס "${(c.id as string).slice(0, 8)}…" אין טקסט חלופי — כותרת ריקה משמשת כ-alt text.`,
+        action: { label: 'תוכן דינמי', tab: 'landing&sub=landing-content' },
+      })
+    }
+  }
+
+  // Team members with image but no name (= no alt text)
+  for (const m of tmList) {
+    if (m.image_url && (!m.name || (m.name as string).trim() === '')) {
+      items.push({
+        id: `a11y-img-team-${m.id}`,
+        category: 'נגישות',
+        label: `חבר צוות עם תמונה ללא שם (= חסר alt)`,
+        severity: 'warn',
+        detail: `לתמונה של חבר צוות "${(m.id as string).slice(0, 8)}…" אין שם — קורא מסך לא יוכל לתאר את התמונה.`,
+        action: { label: 'תוכן דינמי', tab: 'landing&sub=landing-content' },
+      })
+    }
+  }
+
+  // Summary: count images that need alt text review
+  const imagesWithoutProperAlt = [
+    ...acList.filter(c => c.image_url && (!c.title || (c.title as string).trim() === '')),
+    ...tmList.filter(m => m.image_url && (!m.name || (m.name as string).trim() === '')),
+  ]
+  const totalImages = acList.filter(c => c.image_url).length + tmList.filter(m => m.image_url).length
+  if (totalImages > 0 && imagesWithoutProperAlt.length === 0) {
+    // All images have alt text — good!
+  } else if (totalImages === 0) {
+    // No images at all — nothing to check
+  }
+
+  // Rich text content — check for <img> tags without alt
+  for (const c of contentList) {
+    if (c.content_type === 'rich_text' && c.content) {
+      const html = c.content as string
+      const imgWithoutAlt = html.match(/<img(?![^>]*alt=)[^>]*>/gi)
+      if (imgWithoutAlt && imgWithoutAlt.length > 0) {
+        items.push({
+          id: `a11y-richtext-img-${c.id}`,
+          category: 'נגישות',
+          label: `תמונה ללא alt בתוכן עשיר: "${c.title || 'ללא כותרת'}"`,
+          severity: 'warn',
+          detail: `נמצאו ${imgWithoutAlt.length} תמונות ללא תיאור (alt) בבלוק rich_text. קוראי מסך לא יוכלו לתאר אותן.`,
+          action: { label: 'ערוך בלוק', tab: 'courses&sub=manage' },
+        })
+      }
+    }
+  }
+
   // ── Wizard ──────────────────────────────────────────────────────────────
   const { data: wizardSteps } = await supabase.from('wizard_steps').select('*')
   if (!wizardSteps || wizardSteps.length === 0) {

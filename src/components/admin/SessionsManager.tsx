@@ -664,13 +664,6 @@ export function SessionsManager({ course }: { course: Course }) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className="text-xs text-gray-500 font-semibold">מפגש {session.session_number}</span>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                        session.status === 'open'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-white/10 text-gray-500'
-                      }`}>
-                        {session.status === 'open' ? 'פתוח' : 'נעול'}
-                      </span>
                       {session.reveal_index > 0 && (
                         <span className="text-xs bg-blue-500/15 text-blue-400 px-2 py-0.5 rounded-full">
                           חשופים: {session.reveal_index}
@@ -692,12 +685,12 @@ export function SessionsManager({ course }: { course: Course }) {
                     <button onClick={() => toggleStatus(session)}
                       className={`flex items-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold transition-colors ${
                         session.status === 'open'
-                          ? 'bg-white/10 hover:bg-white/15 text-gray-300'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          ? 'bg-green-500/15 text-green-400 hover:bg-green-500/25'
+                          : 'bg-white/10 text-gray-400 hover:bg-white/15'
                       }`}>
                       {session.status === 'open'
-                        ? <><Lock size={13} /> נעל</>
-                        : <><Unlock size={13} /> פתח</>
+                        ? <><Unlock size={13} /> המפגש פתוח</>
+                        : <><Lock size={13} /> המפגש סגור</>
                       }
                     </button>
                     <button onClick={() => setExpandedId(isExpanded ? null : session.id)}

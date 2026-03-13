@@ -6,11 +6,13 @@ import { SEOHead } from '@/components/shared/SEOHead'
 import { getWizardSteps, upsertWizardAnswer } from '@/lib/supabase/queries/wizard'
 import { updateUserProfile } from '@/lib/supabase/queries/users'
 import { useAuth } from '@/hooks/useAuth'
+import { ArrowRight } from 'lucide-react'
 import { WizardForm } from '@/components/wizard/WizardForm'
 import type { WizardStep } from '@/types'
 
 export default function OnboardingPage() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const isAdmin = profile?.role === 'admin'
   const navigate = useNavigate()
   const [steps, setSteps] = useState<WizardStep[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -37,7 +39,9 @@ export default function OnboardingPage() {
     if (currentIndex < steps.length - 1) {
       setCurrentIndex(prev => prev + 1)
     } else {
-      await updateUserProfile(user.id, { onboarding_completed: true })
+      if (!isAdmin) {
+        await updateUserProfile(user.id, { onboarding_completed: true })
+      }
       setCompleted(true)
     }
     setSaving(false)
@@ -113,10 +117,10 @@ export default function OnboardingPage() {
               עכשיו בואו נתחיל ללמוד.
             </p>
             <button
-              onClick={() => navigate('/workspace')}
+              onClick={() => navigate(isAdmin ? '/admin' : '/workspace')}
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl text-sm font-bold transition-colors shadow-lg shadow-blue-600/20"
             >
-              לאזור הלמידה
+              {isAdmin ? 'חזרה לניהול' : 'לאזור הלמידה'}
               <ArrowLeft size={16} />
             </button>
           </div>
@@ -131,6 +135,21 @@ export default function OnboardingPage() {
   return (
     <main id="main-content" className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-4" dir="rtl">
       <SEOHead title="שאלון הכרות" noindex />
+
+      {/* Admin preview banner */}
+      {isAdmin && (
+        <div className="fixed top-0 inset-x-0 z-50 bg-blue-600/90 backdrop-blur-sm text-white text-center py-2 px-4 flex items-center justify-center gap-3 text-sm">
+          <span>תצוגת מנהל — השינויים לא יישמרו בפרופיל</span>
+          <button
+            onClick={() => navigate('/admin')}
+            className="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
+          >
+            <ArrowRight size={12} />
+            חזרה לניהול
+          </button>
+        </div>
+      )}
+
       {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full"

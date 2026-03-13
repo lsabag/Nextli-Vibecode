@@ -5,7 +5,18 @@ import {
   deleteAdditionalCourse,
 } from '@/lib/supabase/queries/admin'
 import type { AdditionalCourse } from '@/types'
-import { Plus, Trash2, Save, GripVertical, Link2, ZoomIn, ZoomOut, Crosshair } from 'lucide-react'
+import { Plus, Trash2, Save, GripVertical, Link2, ZoomIn, ZoomOut, Move, Eye } from 'lucide-react'
+
+const BADGE_STYLES: Record<string, { bg: string; text: string }> = {
+  purple: { bg: 'bg-purple-600/30', text: 'text-purple-400' },
+  blue:   { bg: 'bg-blue-600/30',   text: 'text-blue-400' },
+  green:  { bg: 'bg-green-600/30',  text: 'text-green-400' },
+  amber:  { bg: 'bg-amber-500/30',  text: 'text-amber-400' },
+  red:    { bg: 'bg-red-600/30',    text: 'text-red-400' },
+  pink:   { bg: 'bg-pink-600/30',   text: 'text-pink-400' },
+  teal:   { bg: 'bg-teal-600/30',   text: 'text-teal-400' },
+  gray:   { bg: 'bg-gray-600/30',   text: 'text-gray-400' },
+}
 
 const BADGE_COLORS: { id: string; label: string; cls: string }[] = [
   { id: 'purple', label: 'סגול',  cls: 'bg-purple-600' },
@@ -216,68 +227,109 @@ export function AdditionalCoursesManager() {
                     </a>
                   </div>
 
-                  {/* Image preview with crop & zoom */}
-                  {course.image_url && (
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Crosshair size={10} className="text-gray-500 shrink-0" />
-                        <span className="text-[10px] text-gray-500">לחץ על התמונה לבחירת מוקד החיתוך</span>
-                      </div>
-                      <div
-                        className="relative w-full h-32 bg-white/5 rounded-lg overflow-hidden cursor-crosshair group"
-                        onClick={e => {
-                          const rect = e.currentTarget.getBoundingClientRect()
-                          const x = Math.round(((e.clientX - rect.left) / rect.width) * 100)
-                          const y = Math.round(((e.clientY - rect.top) / rect.height) * 100)
-                          update(course.id, { image_crop_x: x, image_crop_y: y })
-                        }}
-                      >
-                        <img
-                          src={course.image_url}
-                          alt={course.title || 'preview'}
-                          className="w-full h-full object-cover"
-                          style={{
-                            objectPosition: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%`,
-                            transform: `scale(${(course.image_zoom ?? 100) / 100})`,
-                            transformOrigin: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%`,
-                          }}
-                          draggable={false}
-                        />
-                        {/* Focal point indicator */}
-                        <div
-                          className="absolute w-4 h-4 border-2 border-blue-400 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none shadow-[0_0_6px_rgba(96,165,250,0.5)] opacity-0 group-hover:opacity-100 transition-opacity"
-                          style={{ left: `${course.image_crop_x ?? 50}%`, top: `${course.image_crop_y ?? 50}%` }}
-                        />
-                        <div
-                          className="absolute w-1.5 h-1.5 bg-blue-400 rounded-full -translate-x-1/2 -translate-y-1/2 pointer-events-none shadow-[0_0_4px_rgba(96,165,250,0.6)]"
-                          style={{ left: `${course.image_crop_x ?? 50}%`, top: `${course.image_crop_y ?? 50}%` }}
-                        />
-                      </div>
-                      {/* Zoom slider */}
-                      <div className="flex items-center gap-2">
-                        <ZoomOut size={12} className="text-gray-500 shrink-0" />
-                        <input
-                          type="range"
-                          min={100}
-                          max={250}
-                          step={5}
-                          value={course.image_zoom ?? 100}
-                          onChange={e => update(course.id, { image_zoom: Number(e.target.value) })}
-                          className="flex-1 h-1 accent-blue-500 cursor-pointer"
-                        />
-                        <ZoomIn size={12} className="text-gray-500 shrink-0" />
-                        <span className="text-[10px] text-gray-500 w-8 text-center font-mono">{course.image_zoom ?? 100}%</span>
-                        {(course.image_crop_x !== 50 || course.image_crop_y !== 50 || (course.image_zoom ?? 100) !== 100) && (
-                          <button
-                            onClick={() => update(course.id, { image_crop_x: 50, image_crop_y: 50, image_zoom: 100 })}
-                            className="text-[10px] text-gray-500 hover:text-white px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                  {/* Live card preview — exact replica of landing page card */}
+                  {course.image_url && (() => {
+                    const badgeStyle = BADGE_STYLES[course.badge_color] ?? BADGE_STYLES.purple
+                    const showRating = course.show_rating !== false && course.rating
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Eye size={10} className="text-gray-500 shrink-0" />
+                          <span className="text-[10px] text-gray-500">תצוגה מקדימה — גרור את התמונה למיקום הרצוי</span>
+                        </div>
+                        {/* Card replica (max-w to match ~1/3 of landing grid) */}
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 max-w-xs">
+                          {/* Image area — draggable */}
+                          <div
+                            className="w-full h-32 bg-white/5 rounded-xl mb-5 overflow-hidden cursor-grab active:cursor-grabbing select-none relative"
+                            onMouseDown={e => {
+                              e.preventDefault()
+                              const el = e.currentTarget
+                              el.style.cursor = 'grabbing'
+                              const startX = e.clientX
+                              const startY = e.clientY
+                              const startCropX = course.image_crop_x ?? 50
+                              const startCropY = course.image_crop_y ?? 50
+                              const rect = el.getBoundingClientRect()
+                              const zoom = (course.image_zoom ?? 100) / 100
+
+                              function onMove(ev: MouseEvent) {
+                                const dx = ev.clientX - startX
+                                const dy = ev.clientY - startY
+                                const sensitivity = 100 / zoom
+                                const newX = Math.min(100, Math.max(0, startCropX - (dx / rect.width) * sensitivity))
+                                const newY = Math.min(100, Math.max(0, startCropY - (dy / rect.height) * sensitivity))
+                                update(course.id, { image_crop_x: Math.round(newX), image_crop_y: Math.round(newY) })
+                              }
+                              function onUp() {
+                                el.style.cursor = ''
+                                document.removeEventListener('mousemove', onMove)
+                                document.removeEventListener('mouseup', onUp)
+                              }
+                              document.addEventListener('mousemove', onMove)
+                              document.addEventListener('mouseup', onUp)
+                            }}
                           >
-                            איפוס
-                          </button>
-                        )}
+                            <div
+                              className="w-full h-full"
+                              style={{
+                                transform: `scale(${(course.image_zoom ?? 100) / 100})`,
+                                transformOrigin: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%`,
+                              }}
+                            >
+                              <img
+                                src={course.image_url}
+                                alt={course.title || 'preview'}
+                                className="w-full h-full object-cover pointer-events-none"
+                                style={{ objectPosition: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%` }}
+                                draggable={false}
+                              />
+                            </div>
+                            {/* Drag hint overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity bg-black/20">
+                              <Move size={20} className="text-white drop-shadow-lg" />
+                            </div>
+                          </div>
+                          {/* Card content — read-only preview */}
+                          <div className="flex items-center justify-between mb-2">
+                            {showRating && (
+                              <span className="text-yellow-400 text-sm">★ {course.rating}</span>
+                            )}
+                            {course.badge && (
+                              <span className={`${badgeStyle.bg} ${badgeStyle.text} text-xs px-2 py-0.5 rounded-full ${!showRating ? 'mr-auto' : ''}`}>
+                                {course.badge}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-white font-bold text-lg mb-2">{course.title || 'שם הקורס'}</h3>
+                          <p className="text-gray-400 text-sm">{course.description || 'תיאור קצר'}</p>
+                        </div>
+                        {/* Zoom slider */}
+                        <div className="flex items-center gap-2 max-w-xs">
+                          <ZoomOut size={12} className="text-gray-500 shrink-0" />
+                          <input
+                            type="range"
+                            min={100}
+                            max={300}
+                            step={5}
+                            value={course.image_zoom ?? 100}
+                            onChange={e => update(course.id, { image_zoom: Number(e.target.value) })}
+                            className="flex-1 h-1 accent-blue-500 cursor-pointer"
+                          />
+                          <ZoomIn size={12} className="text-gray-500 shrink-0" />
+                          <span className="text-[10px] text-gray-500 w-8 text-center font-mono">{course.image_zoom ?? 100}%</span>
+                          {(course.image_crop_x !== 50 || course.image_crop_y !== 50 || (course.image_zoom ?? 100) !== 100) && (
+                            <button
+                              onClick={() => update(course.id, { image_crop_x: 50, image_crop_y: 50, image_zoom: 100 })}
+                              className="text-[10px] text-gray-500 hover:text-white px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 transition-colors"
+                            >
+                              איפוס
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )
+                  })()}
                 </div>
 
                 {/* Actions */}

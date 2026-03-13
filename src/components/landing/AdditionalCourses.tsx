@@ -53,20 +53,26 @@ export function AdditionalCourses({ settings }: Props) {
               transition={{ delay: i * 0.1 }}
               className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-blue-500/40 transition-colors"
             >
-              <div className="w-full h-32 bg-white/5 rounded-xl mb-5 flex items-center justify-center overflow-hidden">
+              <div className="w-full h-32 bg-white/5 rounded-xl mb-5 overflow-hidden">
                 {course.image_url ? (
-                  <img
-                    src={course.image_url}
-                    alt={course.title}
-                    className="w-full h-full object-cover"
+                  <div
+                    className="w-full h-full"
                     style={{
-                      objectPosition: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%`,
                       transform: `scale(${(course.image_zoom ?? 100) / 100})`,
                       transformOrigin: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%`,
                     }}
-                  />
+                  >
+                    <img
+                      src={course.image_url}
+                      alt={course.title}
+                      className="w-full h-full object-cover"
+                      style={{ objectPosition: `${course.image_crop_x ?? 50}% ${course.image_crop_y ?? 50}%` }}
+                    />
+                  </div>
                 ) : (
-                  <span className="text-4xl" aria-hidden="true">🎓</span>
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-4xl" aria-hidden="true">🎓</span>
+                  </div>
                 )}
               </div>
               <div className="flex items-center justify-between mb-2">

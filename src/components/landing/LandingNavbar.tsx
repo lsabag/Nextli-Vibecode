@@ -122,7 +122,7 @@ export function LandingNavbar({ user, profile, settings }: Props) {
                         transition={{ duration: 0.15 }}
                         role="menu"
                         aria-modal="true"
-                        className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-white/10 bg-[#14142a] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                        className="absolute left-0 top-full mt-2 w-64 rounded-xl border border-white/10 bg-[#14142a] shadow-2xl shadow-black/50 overflow-hidden z-50"
                       >
                         <Link
                           to="/login"

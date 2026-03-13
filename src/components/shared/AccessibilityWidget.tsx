@@ -131,7 +131,7 @@ export function AccessibilityWidget() {
         onClick={() => setOpen(v => !v)}
         aria-label="פתח תפריט נגישות"
         aria-expanded={open}
-        className="fixed top-24 left-0 z-[9999] w-10 h-10 rounded-r-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 flex items-center justify-center transition-all hover:w-11 focus-visible:ring-2 focus-visible:ring-white"
+        className="fixed bottom-6 left-0 z-[9999] w-10 h-10 rounded-r-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 flex items-center justify-center transition-all hover:w-11 focus-visible:ring-2 focus-visible:ring-white"
       >
         <A11yIcon size={22} />
       </button>

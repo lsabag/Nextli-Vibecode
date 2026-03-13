@@ -1,17 +1,19 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase/client'
 import { SEOHead } from '@/components/shared/SEOHead'
 import {
   LayoutDashboard, Users, GraduationCap, Home, Settings, Menu,
-  ChevronDown, ClipboardCheck,
+  ChevronDown, ClipboardCheck, Search, X,
 } from 'lucide-react'
+import { getSettingsSearchIndex } from '@/components/admin/SettingsManager'
 
 const StudentInsights = lazy(() => import('@/components/admin/StudentInsights').then(m => ({ default: m.StudentInsights })))
 const WizardManager = lazy(() => import('@/components/admin/WizardManager').then(m => ({ default: m.WizardManager })))
 const CoursesManager = lazy(() => import('@/components/admin/CoursesManager').then(m => ({ default: m.CoursesManager })))
 const SettingsManager = lazy(() => import('@/components/admin/SettingsManager').then(m => ({ default: m.SettingsManager })))
+const LandingPageSettings = lazy(() => import('@/components/admin/SettingsManager').then(m => ({ default: m.LandingPageSettings })))
 const SystemHealthCheck = lazy(() => import('@/components/admin/SystemHealthCheck').then(m => ({ default: m.SystemHealthCheck })))
 const LandingManager = lazy(() => import('@/components/admin/LandingManager').then(m => ({ default: m.LandingManager })))
 const WaitlistManager = lazy(() => import('@/components/admin/WaitlistManager').then(m => ({ default: m.WaitlistManager })))
@@ -65,13 +67,14 @@ const navItems: NavItem[] = [
     label: 'דף הבית',
     icon: <Home size={18} />,
     children: [
-      { id: 'landing-content', label: 'תוכן דף הבית' },
+      { id: 'landing-settings', label: 'הגדרות דף הבית' },
+      { id: 'landing-content', label: 'תוכן דינמי' },
       { id: 'prompt-showcase', label: 'סקשן פרומפטים' },
     ],
   },
   {
     id: 'settings',
-    label: 'הגדרות',
+    label: 'הגדרות כלליות',
     icon: <Settings size={18} />,
   },
 ]
@@ -87,6 +90,42 @@ for (const item of navItems) {
       allIds.add(child.id)
     }
   }
+}
+
+// ── Search index ─────────────────────────────────────────────────────────────
+
+type SearchResult = {
+  label: string
+  sectionTitle: string
+  sectionIcon: string
+  navigateTo: string // admin tab id
+}
+
+function buildSearchIndex(): SearchResult[] {
+  const results: SearchResult[] = []
+
+  // Settings entries
+  for (const entry of getSettingsSearchIndex()) {
+    results.push({
+      label: entry.label,
+      sectionTitle: entry.sectionTitle,
+      sectionIcon: entry.sectionIcon,
+      navigateTo: entry.mode === 'landing' ? 'landing-settings' : 'settings',
+    })
+  }
+
+  // Nav pages
+  for (const item of navItems) {
+    if (item.children) {
+      for (const child of item.children) {
+        results.push({ label: child.label, sectionTitle: item.label, sectionIcon: '', navigateTo: child.id })
+      }
+    } else {
+      results.push({ label: item.label, sectionTitle: '', sectionIcon: '', navigateTo: item.id })
+    }
+  }
+
+  return results
 }
 
 // ── Prep tab wrapper ─────────────────────────────────────────────────────────
@@ -130,18 +169,19 @@ function PrepTabWrapper() {
 
 function renderContent(activeId: string) {
   switch (activeId) {
-    case 'dashboard':   return <AdminDashboard />
-    case 'health':      return <SystemHealthCheck />
-    case 'waitlist':    return <WaitlistManager />
-    case 'insights':    return <StudentInsights />
-    case 'wizard':      return <WizardManager />
-    case 'notes':       return <NotesViewer />
-    case 'manage':      return <CoursesManager />
-    case 'prep':        return <PrepTabWrapper />
-    case 'landing-content': return <LandingManager />
-    case 'prompt-showcase': return <PromptShowcaseManager />
-    case 'settings':    return <SettingsManager />
-    default:            return <AdminDashboard />
+    case 'dashboard':        return <AdminDashboard />
+    case 'health':           return <SystemHealthCheck />
+    case 'waitlist':         return <WaitlistManager />
+    case 'insights':         return <StudentInsights />
+    case 'wizard':           return <WizardManager />
+    case 'notes':            return <NotesViewer />
+    case 'manage':           return <CoursesManager />
+    case 'prep':             return <PrepTabWrapper />
+    case 'landing-settings': return <LandingPageSettings />
+    case 'landing-content':  return <LandingManager />
+    case 'prompt-showcase':  return <PromptShowcaseManager />
+    case 'settings':         return <SettingsManager />
+    default:                 return <AdminDashboard />
   }
 }
 
@@ -152,6 +192,19 @@ export default function AdminPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchFocused, setSearchFocused] = useState(false)
+
+  const searchIndex = useMemo(() => buildSearchIndex(), [])
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return []
+    const q = searchQuery.trim().toLowerCase()
+    return searchIndex.filter(r =>
+      r.label.toLowerCase().includes(q) ||
+      r.sectionTitle.toLowerCase().includes(q)
+    ).slice(0, 8)
+  }, [searchQuery, searchIndex])
 
   // Resolve active page from URL
   const resolveActive = useCallback((): string => {
@@ -194,6 +247,8 @@ export default function AdminPage() {
       setSearchParams({ tab: id })
     }
     setSidebarOpen(false)
+    setSearchQuery('')
+    setSearchFocused(false)
   }, [setSearchParams])
 
   function toggleGroup(groupId: string) {
@@ -245,6 +300,53 @@ export default function AdminPage() {
           <span className="text-lg font-black text-white">
             Nextli: <span className="text-blue-400">ניהול</span>
           </span>
+        </div>
+
+        {/* Search */}
+        <div className="px-3 pt-3 pb-1 relative">
+          <div className="relative">
+            <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+              placeholder="חיפוש הגדרה..."
+              className="w-full bg-white/5 border border-white/10 rounded-lg pr-8 pl-3 py-2 text-xs text-white placeholder-gray-600 outline-none focus:border-blue-500/50 transition-colors"
+              dir="rtl"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-400">
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          {/* Search results dropdown */}
+          {searchFocused && searchResults.length > 0 && (
+            <div className="absolute right-3 left-3 top-full mt-1 z-50 bg-[#1a1a2e] border border-white/10 rounded-lg shadow-xl overflow-hidden max-h-64 overflow-y-auto">
+              {searchResults.map((result, i) => (
+                <button
+                  key={i}
+                  onMouseDown={() => navigate(result.navigateTo)}
+                  className="w-full text-right px-3 py-2.5 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                >
+                  <div className="text-xs text-white font-medium">{result.label}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5 flex items-center gap-1">
+                    {result.sectionIcon && <span>{result.sectionIcon}</span>}
+                    {result.sectionTitle}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {searchFocused && searchQuery.trim() && searchResults.length === 0 && (
+            <div className="absolute right-3 left-3 top-full mt-1 z-50 bg-[#1a1a2e] border border-white/10 rounded-lg shadow-xl px-3 py-3">
+              <p className="text-xs text-gray-500 text-center">לא נמצאו תוצאות</p>
+            </div>
+          )}
         </div>
 
         {/* Nav items */}
@@ -306,8 +408,6 @@ export default function AdminPage() {
         <div className="px-4 py-3 border-t border-white/10">
           <a
             href="/"
-            target="_blank"
-            rel="noopener noreferrer"
             className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors block mb-2"
           >
             צפה בדף הבית

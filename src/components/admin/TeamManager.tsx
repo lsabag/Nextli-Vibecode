@@ -5,7 +5,7 @@ import {
   deleteTeamMember,
 } from '@/lib/supabase/queries/admin'
 import type { TeamMember } from '@/types'
-import { Plus, Trash2, Check, Upload, X } from 'lucide-react'
+import { Plus, Trash2, Check, Upload, X, Link2 } from 'lucide-react'
 
 function blankMember(order: number): Omit<TeamMember, 'created_at'> {
   return {
@@ -73,10 +73,16 @@ export function TeamManager() {
   }
 
   function handleImageUpload(memberId: string, file: File) {
-    // Convert to data URL for local/mock storage
+    // Convert to data URL — works in dev mode, but too large for D1 production
+    // For production, use an external URL instead (paste into the URL field)
     const reader = new FileReader()
     reader.onload = () => {
       const dataUrl = reader.result as string
+      // Warn if data URL is very large (>50KB won't reliably save to D1)
+      if (dataUrl.length > 50_000) {
+        alert('התמונה גדולה מדי לשמירה ישירה. העלה את התמונה לשירות חיצוני (כמו Imgur או Cloudflare R2) והדבק את הלינק בשדה URL.')
+        return
+      }
       setMembers(prev => {
         const updated = prev.map(m => m.id === memberId ? { ...m, image_url: dataUrl } : m)
         const member = updated.find(m => m.id === memberId)
@@ -85,6 +91,15 @@ export function TeamManager() {
       })
     }
     reader.readAsDataURL(file)
+  }
+
+  function handleImageUrl(memberId: string, url: string) {
+    setMembers(prev => {
+      const updated = prev.map(m => m.id === memberId ? { ...m, image_url: url || null } : m)
+      const member = updated.find(m => m.id === memberId)
+      if (member) immediateSave(member)
+      return updated
+    })
   }
 
   function clearImage(memberId: string) {
@@ -180,7 +195,8 @@ export function TeamManager() {
               </div>
 
               {/* Fields row */}
-              <div className="flex-1 grid grid-cols-4 gap-2 min-w-0">
+              <div className="flex-1 space-y-2 min-w-0">
+              <div className="grid grid-cols-4 gap-2">
                 <input
                   value={member.name}
                   onChange={e => update(member.id, { name: e.target.value })}
@@ -221,6 +237,27 @@ export function TeamManager() {
                     פעיל
                   </label>
                 </div>
+              </div>
+              {/* Image URL input */}
+              <div className="flex items-center gap-2">
+                <Link2 size={12} className="text-gray-600 shrink-0" />
+                <input
+                  type="text"
+                  value={member.image_url?.startsWith('data:') ? '' : (member.image_url ?? '')}
+                  onChange={e => handleImageUrl(member.id, e.target.value)}
+                  placeholder="URL לתמונה (הדבק לינק חיצוני)"
+                  className={`${inputCls} text-xs`}
+                  dir="ltr"
+                />
+                <a
+                  href="https://imgur.com/upload"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-blue-400 hover:text-blue-300 shrink-0 whitespace-nowrap transition-colors"
+                >
+                  העלה ל-Imgur
+                </a>
+              </div>
               </div>
 
               {/* Delete */}

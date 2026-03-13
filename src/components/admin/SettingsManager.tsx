@@ -10,6 +10,12 @@ const FOMO_KEYS = new Set(['fomo_banner_active', 'fomo_text', 'fomo_variant', 'f
 const PROMPT_KEYS_PREFIX = ['terminal_', 'beforeafter_', 'beforeafter_bad_', 'beforeafter_good_', 'cards_', 'chat_']
 
 const settingLabels: Record<string, string> = {
+  // Navbar
+  navbar_links:          'קישורי ניווט',
+  navbar_popup_title:    'כותרת פופאפ "אזור אישי"',
+  navbar_popup_subtitle: 'תת-כותרת פופאפ',
+  navbar_popup_icon:     'אייקון פופאפ',
+
   // Hero
   hero_headline:       'כותרת ראשית',
   hero_subheadline:    'כותרת משנה',
@@ -44,12 +50,6 @@ const settingLabels: Record<string, string> = {
   contact_email:       'אימייל',
   contact_phone:       'טלפון',
 
-  // Navbar
-  navbar_links:          'קישורי ניווט',
-  navbar_popup_title:    'כותרת פופאפ "אזור אישי"',
-  navbar_popup_subtitle: 'תת-כותרת פופאפ',
-  navbar_popup_icon:     'אייקון פופאפ',
-
   // Footer
   footer_text:         'טקסט זכויות יוצרים',
 
@@ -57,8 +57,15 @@ const settingLabels: Record<string, string> = {
   ai_mentor_active:    'AI Mentor (פעיל/כבוי)',
 }
 
-// Group settings into sections for organized display
-const SECTIONS: { title: string; icon: string; keys: string[] }[] = [
+type Section = { title: string; icon: string; keys: string[] }
+
+// Landing page sections — ordered top-to-bottom like the actual page
+const LANDING_SECTIONS: Section[] = [
+  {
+    title: 'Header — ניווט עליון',
+    icon: '🧭',
+    keys: ['navbar_links', 'navbar_popup_title', 'navbar_popup_subtitle', 'navbar_popup_icon'],
+  },
   {
     title: 'Hero — ראש העמוד',
     icon: '🏠',
@@ -90,16 +97,21 @@ const SECTIONS: { title: string; icon: string; keys: string[] }[] = [
     keys: ['contact_heading', 'contact_description', 'contact_success', 'contact_email', 'contact_phone'],
   },
   {
-    title: 'ניווט ופוטר',
+    title: 'Footer — תחתית העמוד',
     icon: '🔗',
-    keys: ['navbar_links', 'navbar_popup_title', 'navbar_popup_subtitle', 'navbar_popup_icon', 'footer_text'],
+    keys: ['footer_text'],
   },
+]
+
+const GENERAL_SECTIONS: Section[] = [
   {
     title: 'כללי',
     icon: '⚙️',
     keys: ['ai_mentor_active'],
   },
 ]
+
+const ALL_SECTIONS = [...LANDING_SECTIONS, ...GENERAL_SECTIONS]
 
 const TOGGLE_KEYS = new Set(['ai_mentor_active'])
 const VISUAL_JSON_KEYS = new Set(['hero_features', 'syllabus_badges', 'navbar_links'])
@@ -113,6 +125,32 @@ function isPromptShowcaseKey(key: string) {
 
 function parseJSON<T>(json: string, fallback: T): T {
   try { return JSON.parse(json) } catch { return fallback }
+}
+
+// ── Searchable index for global admin search ─────────────────────────────────
+
+export type SettingSearchEntry = {
+  key: string
+  label: string
+  sectionTitle: string
+  sectionIcon: string
+  mode: 'landing' | 'general'
+}
+
+/** Returns a flat list of all settings with their section info, for use in admin search */
+export function getSettingsSearchIndex(): SettingSearchEntry[] {
+  const entries: SettingSearchEntry[] = []
+  for (const section of LANDING_SECTIONS) {
+    for (const key of section.keys) {
+      entries.push({ key, label: settingLabels[key] ?? key, sectionTitle: section.title, sectionIcon: section.icon, mode: 'landing' })
+    }
+  }
+  for (const section of GENERAL_SECTIONS) {
+    for (const key of section.keys) {
+      entries.push({ key, label: settingLabels[key] ?? key, sectionTitle: section.title, sectionIcon: section.icon, mode: 'general' })
+    }
+  }
+  return entries
 }
 
 // ── Visual JSON Editors ──────────────────────────────────────────────────────
@@ -338,14 +376,26 @@ function EmojiSelect({ value, onChange }: { value: string; onChange: (v: string)
   )
 }
 
-// ── Main component ───────────────────────────────────────────────────────────
+// ── Shared settings renderer ─────────────────────────────────────────────────
 
-export function SettingsManager() {
+type SettingsRendererProps = {
+  sections: Section[]
+  title: string
+  /** If true, all sections start collapsed except the first one */
+  defaultCollapsed?: boolean
+}
+
+function SettingsRenderer({ sections, title, defaultCollapsed = false }: SettingsRendererProps) {
   const [rows, setRows] = useState<SettingRow[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    if (!defaultCollapsed) return {}
+    const init: Record<string, boolean> = {}
+    sections.forEach((s, i) => { init[s.title] = i > 0 })
+    return init
+  })
 
   function loadSettings() {
     setLoading(true)
@@ -373,14 +423,14 @@ export function SettingsManager() {
     setSaving(null)
   }
 
-  function toggleSection(title: string) {
-    setCollapsed(prev => ({ ...prev, [title]: !prev[title] }))
+  function toggleSection(sectionTitle: string) {
+    setCollapsed(prev => ({ ...prev, [sectionTitle]: !prev[sectionTitle] }))
   }
 
   const rowMap = Object.fromEntries(rows.map(r => [r.key, r]))
 
-  // Collect any keys not in a section (from DB but not categorized)
-  const categorizedKeys = new Set(SECTIONS.flatMap(s => s.keys))
+  // Collect any keys not in the given sections
+  const categorizedKeys = new Set(ALL_SECTIONS.flatMap(s => s.keys))
   const uncategorized = rows.filter(r => !categorizedKeys.has(r.key))
 
   function renderField(row: SettingRow) {
@@ -424,7 +474,6 @@ export function SettingsManager() {
       )
     }
 
-    // Visual JSON editors
     if (row.key === 'hero_features') {
       return <FeatureCardsEditor value={row.value} onChange={v => handleChange(row.key, v)} />
     }
@@ -501,11 +550,11 @@ export function SettingsManager() {
 
   return (
     <div dir="rtl">
-      <h2 className="text-xl font-bold text-white mb-6">הגדרות האתר</h2>
+      <h2 className="text-xl font-bold text-white mb-6">{title}</h2>
 
       {loading ? (
         <div className="space-y-4">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />)}
         </div>
       ) : fetchError ? (
         <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center">
@@ -514,11 +563,11 @@ export function SettingsManager() {
           <button onClick={loadSettings} className="bg-white/10 hover:bg-white/15 text-gray-300 px-4 py-2 rounded-lg text-sm transition-colors">נסה שוב</button>
         </div>
       ) : (
-        <div className="space-y-4">
-          {SECTIONS.map(section => {
+        <div className="space-y-3">
+          {sections.map(section => {
             const sectionRows = section.keys.map(k => rowMap[k]).filter(Boolean)
             if (sectionRows.length === 0) return null
-            const isCollapsed = collapsed[section.title]
+            const isCollapsed = collapsed[section.title] ?? false
 
             return (
               <div key={section.title} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
@@ -542,7 +591,8 @@ export function SettingsManager() {
             )
           })}
 
-          {uncategorized.length > 0 && (
+          {/* Show uncategorized only in general settings mode */}
+          {sections === GENERAL_SECTIONS && uncategorized.length > 0 && (
             <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
               <button
                 onClick={() => toggleSection('__uncategorized')}
@@ -553,9 +603,9 @@ export function SettingsManager() {
                   <span className="text-white font-semibold text-sm">הגדרות נוספות</span>
                   <span className="text-gray-600 text-xs">({uncategorized.length})</span>
                 </div>
-                {collapsed['__uncategorized'] ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronUp size={16} className="text-gray-500" />}
+                {(collapsed['__uncategorized'] ?? false) ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronUp size={16} className="text-gray-500" />}
               </button>
-              {!collapsed['__uncategorized'] && (
+              {!(collapsed['__uncategorized'] ?? false) && (
                 <div className="px-5 pb-4">
                   {uncategorized.map(row => renderRow(row))}
                 </div>
@@ -566,4 +616,16 @@ export function SettingsManager() {
       )}
     </div>
   )
+}
+
+// ── Exported components ──────────────────────────────────────────────────────
+
+/** Landing page settings — organized by page section (Header → Footer) */
+export function LandingPageSettings() {
+  return <SettingsRenderer sections={LANDING_SECTIONS} title="הגדרות דף הבית" defaultCollapsed />
+}
+
+/** General / non-landing settings */
+export function SettingsManager() {
+  return <SettingsRenderer sections={GENERAL_SECTIONS} title="הגדרות כלליות" />
 }

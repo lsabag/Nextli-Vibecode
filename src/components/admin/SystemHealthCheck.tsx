@@ -54,6 +54,31 @@ function setSnoozed(ids: Set<string>) {
   localStorage.setItem(SNOOZE_KEY, JSON.stringify([...ids]))
 }
 
+// ── Live checks helpers ──────────────────────────────────────────────────────
+
+async function checkContactEndpoint(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    // Any response means the endpoint exists (even 400 validation error)
+    return res.status !== 404
+  } catch {
+    return false
+  }
+}
+
+async function checkFileExists(path: string): Promise<boolean> {
+  try {
+    const res = await fetch(path, { method: 'HEAD' })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+function checkGAConfigured(): boolean {
+  return typeof window !== 'undefined' && typeof window.gtag === 'function'
+}
+
 // ── Checks ───────────────────────────────────────────────────────────────────
 
 async function runChecks(): Promise<CheckItem[]> {
@@ -221,7 +246,7 @@ async function runChecks(): Promise<CheckItem[]> {
       label: 'לא הוגדר אימייל ליצירת קשר',
       severity: 'warn',
       detail: 'לינק האימייל בדף הנחיתה לא יופיע.',
-      action: { label: 'הגדרות מערכת', tab: 'settings' },
+      action: { label: 'הגדרות דף הבית', tab: 'landing&sub=landing-settings' },
     })
   }
 
@@ -232,7 +257,7 @@ async function runChecks(): Promise<CheckItem[]> {
       label: 'לא הוגדר מספר טלפון ליצירת קשר',
       severity: 'warn',
       detail: 'לינק הטלפון בדף הנחיתה לא יופיע.',
-      action: { label: 'הגדרות מערכת', tab: 'settings' },
+      action: { label: 'הגדרות דף הבית', tab: 'landing&sub=landing-settings' },
     })
   }
 
@@ -243,7 +268,7 @@ async function runChecks(): Promise<CheckItem[]> {
       label: 'באנר FOMO פעיל ללא לינק CTA',
       severity: 'error',
       detail: 'הבאנר מוצג אבל כפתור הפעולה לא מוביל לשום מקום.',
-      action: { label: 'באנר FOMO', tab: 'landing&sub=landing-content' },
+      action: { label: 'תוכן דינמי', tab: 'landing&sub=landing-content' },
     })
   }
 
@@ -258,7 +283,7 @@ async function runChecks(): Promise<CheckItem[]> {
       label: 'אין חברי צוות',
       severity: 'info',
       detail: 'סקשן "הצוות" בדף הנחיתה יהיה ריק.',
-      action: { label: 'הנבחרת', tab: 'landing&sub=landing-content' },
+      action: { label: 'תוכן דינמי', tab: 'landing&sub=landing-content' },
     })
   }
 
@@ -269,7 +294,7 @@ async function runChecks(): Promise<CheckItem[]> {
       label: 'אין קורסים נוספים בדף הנחיתה',
       severity: 'info',
       detail: 'סקשן "קורסים נוספים" בדף הנחיתה לא יוצג.',
-      action: { label: 'קורסים בדף הראשי', tab: 'landing&sub=landing-content' },
+      action: { label: 'תוכן דינמי', tab: 'landing&sub=landing-content' },
     })
   }
 
@@ -286,40 +311,42 @@ async function runChecks(): Promise<CheckItem[]> {
     })
   }
 
-  // ── Features not yet implemented ────────────────────────────────────────
-  items.push({
-    id: 'contact-form-noop',
-    category: 'פיצ\'רים חסרים',
-    label: 'טופס יצירת קשר לא שולח באמת',
-    severity: 'error',
-    detail: 'הטופס מציג "נשלח" אבל לא שולח מייל. צריך לחבר שירות אימייל (SendGrid / Resend / Cloudflare Email Workers).',
-  })
+  // ── Live checks — contact form endpoint ─────────────────────────────────
+  const contactAlive = await checkContactEndpoint()
+  if (!contactAlive) {
+    items.push({
+      id: 'contact-endpoint-down',
+      category: 'תשתיות',
+      label: 'נקודת קצה של טופס יצירת קשר לא מגיבה',
+      severity: 'error',
+      detail: 'ה-API /api/contact לא מגיב — ייתכן שצריך לבדוק את Cloudflare Functions.',
+    })
+  }
 
-  items.push({
-    id: 'ai-mentor-placeholder',
-    category: 'פיצ\'רים חסרים',
-    label: 'AI Mentor — placeholder בלבד',
-    severity: 'info',
-    detail: 'הכפתור מציג "יהיה זמין בקרוב". אפשר להסיר או לחבר ל-API.',
-  })
+  // ── Live checks — Google Analytics ──────────────────────────────────────
+  if (!checkGAConfigured()) {
+    items.push({
+      id: 'ga-not-loaded',
+      category: 'תשתיות',
+      label: 'Google Analytics לא נטען',
+      severity: 'warn',
+      detail: 'window.gtag לא זמין. ייתכן שהסקריפט לא נטען או שה-tag חסום. בדוק ב-DevTools Network.',
+    })
+  }
+
+  // ── Live checks — OG Image ──────────────────────────────────────────────
+  const ogExists = await checkFileExists('/og-image.png')
+  if (!ogExists) {
+    items.push({
+      id: 'og-image-missing',
+      category: 'השקה',
+      label: 'OG Image (PNG) חסר',
+      severity: 'warn',
+      detail: 'רשתות חברתיות דורשות og-image.png (1200x630). בדקו ב-public/og-image.png.',
+    })
+  }
 
   // ── Deployment readiness ──────────────────────────────────────────────
-  items.push({
-    id: 'ga-placeholder',
-    category: 'השקה',
-    label: 'Google Analytics — מזהה לא הוגדר',
-    severity: 'error',
-    detail: 'צריך להחליף את GA_MEASUREMENT_ID בקובץ src/lib/analytics.ts עם מזהה אמיתי של Google Analytics.',
-  })
-
-  items.push({
-    id: 'og-image-png',
-    category: 'השקה',
-    label: 'OG Image — צריך להמיר ל-PNG',
-    severity: 'warn',
-    detail: 'קיים og-image.svg בתיקיית public אבל רשתות חברתיות דורשות PNG/JPG (1200x630). יש להמיר ולשמור כ-og-image.png.',
-  })
-
   items.push({
     id: 'legal-contact-info',
     category: 'השקה',
@@ -328,13 +355,24 @@ async function runChecks(): Promise<CheckItem[]> {
     detail: 'עמודי פרטיות, נגישות ותנאי שימוש מכילים אימיילים/טלפונים לדוגמה. עדכנו לפרטים אמיתיים.',
   })
 
-  // sitemap.xml — created in public/sitemap.xml. Update when adding new public routes.
+  // ── Features not yet implemented ────────────────────────────────────────
+  items.push({
+    id: 'ai-mentor-placeholder',
+    category: 'פיצ\'רים חסרים',
+    label: 'AI Mentor — placeholder בלבד',
+    severity: 'info',
+    detail: 'הכפתור מציג "יהיה זמין בקרוב". אפשר להסיר או לחבר ל-API.',
+  })
 
-  // D1 database is now connected — no longer showing Supabase warning
+  items.push({
+    id: 'payment-not-connected',
+    category: 'פיצ\'רים חסרים',
+    label: 'אין חיבור לתשלומים',
+    severity: 'error',
+    detail: 'שדה payment_status קיים בפרופיל משתמש אבל אין ספק תשלומים מחובר (PayPal / Stripe / גרין אינווייס).',
+  })
 
   // ── Accessibility compliance (Israeli Standard 5568) ──────────────────
-  // skip-nav and focus-trap — implemented
-
   items.push({
     id: 'a11y-contrast-audit',
     category: 'נגישות',
@@ -357,14 +395,6 @@ async function runChecks(): Promise<CheckItem[]> {
     label: 'נדרש בדיקת ניווט מקלדת',
     severity: 'warn',
     detail: 'ודאו שכל אלמנט אינטראקטיבי נגיש עם Tab, Enter, Space, Escape ומקשי חצים.',
-  })
-
-  items.push({
-    id: 'payment-not-connected',
-    category: 'פיצ\'רים חסרים',
-    label: 'אין חיבור לתשלומים',
-    severity: 'error',
-    detail: 'שדה payment_status קיים בפרופיל משתמש אבל אין ספק תשלומים מחובר (PayPal / Stripe / גרין אינווייס).',
   })
 
   return items
@@ -491,7 +521,7 @@ export function SystemHealthCheck() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-white mb-1">נשאר לעשות</h2>
-          <p className="text-sm text-gray-500">בדיקה אוטומטית — כשתתקן, הפריט ייעלם. לחץ Snooze כדי להוריד לתחתית.</p>
+          <p className="text-sm text-gray-500">בדיקה אוטומטית של DB + תשתיות חיות. לחץ "בדוק שוב" לרענון.</p>
         </div>
         <div className="flex items-center gap-2">
           {snoozedItems.length > 0 && (

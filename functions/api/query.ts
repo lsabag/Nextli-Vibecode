@@ -68,7 +68,7 @@ function buildWhereClause(
     switch (f.type) {
       case 'eq': {
         conditions.push(`${safeName(f.column!)} = ?`);
-        params.push(f.value);
+        params.push(typeof f.value === 'boolean' ? (f.value ? 1 : 0) : f.value);
         break;
       }
       case 'in': {

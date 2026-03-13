@@ -232,7 +232,7 @@ export async function getAdminSystemSettings(): Promise<Record<string, string>> 
 export async function updateSystemSetting(key: string, value: string): Promise<void> {
   const { error } = await supabase
     .from('system_settings')
-    .upsert({ key, value })
+    .upsert({ key, value }, { onConflict: 'key' })
   if (error) throw error
 }
 

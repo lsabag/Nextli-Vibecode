@@ -37,9 +37,9 @@ const seedData: Record<string, unknown[]> = {
     { id: MOCK_COURSE_ID, title: 'וייבקוד — פיתוח עם AI', description: 'קורס אינטנסיבי לבניית אתרים ואפליקציות בעזרת כלי AI', status: 'active', display_order: 0, created_at: '2026-01-01T00:00:00Z' },
   ],
   course_sessions: [
-    { id: 'session-001', course_id: MOCK_COURSE_ID, session_number: 1, title: 'מפגש 1: הכרות עם AI Coding', description: 'סביבת עבודה, כלים בסיסיים, ופרויקט ראשון', status: 'open', reveal_index: 3, scheduled_at: null, created_at: '2026-01-01T00:00:00Z' },
-    { id: 'session-002', course_id: MOCK_COURSE_ID, session_number: 2, title: 'מפגש 2: בניית אפליקציה מלאה', description: 'Frontend, Backend, ו-Database', status: 'open', reveal_index: 2, scheduled_at: null, created_at: '2026-01-02T00:00:00Z' },
-    { id: 'session-003', course_id: MOCK_COURSE_ID, session_number: 3, title: 'מפגש 3: Deploy ו-Production', description: 'העלאה לאוויר, דומיין, ואופטימיזציה', status: 'locked', reveal_index: 0, scheduled_at: '2026-04-01T18:00:00Z', created_at: '2026-01-03T00:00:00Z' },
+    { id: 'session-001', course_id: MOCK_COURSE_ID, session_number: 1, title: 'מפגש 1: הכרות עם AI Coding', description: 'סביבת עבודה, כלים בסיסיים, ופרויקט ראשון', status: 'open', reveal_index: 3, scheduled_at: null, created_at: '2026-01-01T00:00:00Z', public_visible: true, public_description: 'נכיר את הכלים המובילים לפיתוח עם AI, נקים סביבת עבודה מקצועית, ונבנה פרויקט ראשון מא\' ועד ת\'' },
+    { id: 'session-002', course_id: MOCK_COURSE_ID, session_number: 2, title: 'מפגש 2: בניית אפליקציה מלאה', description: 'Frontend, Backend, ו-Database', status: 'open', reveal_index: 2, scheduled_at: null, created_at: '2026-01-02T00:00:00Z', public_visible: true, public_description: 'נבנה אפליקציה מלאה עם ממשק משתמש, שרת, ובסיס נתונים — הכל בעזרת AI' },
+    { id: 'session-003', course_id: MOCK_COURSE_ID, session_number: 3, title: 'מפגש 3: Deploy ו-Production', description: 'העלאה לאוויר, דומיין, ואופטימיזציה', status: 'locked', reveal_index: 0, scheduled_at: '2026-04-01T18:00:00Z', created_at: '2026-01-03T00:00:00Z', public_visible: true, public_description: 'נעלה את המוצר לאוויר עם דומיין אמיתי, נבצע אופטימיזציה, ונלמד לתחזק פרויקט בפרודקשן' },
   ],
   session_content: [
     { id: 'content-001', session_id: 'session-001', content_type: 'rich_text', title: 'ברוכים הבאים!', content: '<p>ברוכים הבאים לקורס <strong>וייבקוד</strong>. בקורס זה נלמד איך לבנות אתרים ואפליקציות בעזרת כלי AI מתקדמים.</p>', language: null, display_order: 0, is_locked: false, file_url: null, created_at: '2026-01-01T00:00:00Z' },

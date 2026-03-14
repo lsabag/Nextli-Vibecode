@@ -398,6 +398,8 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
   const [title, setTitle] = useState(session.title)
   const [description, setDescription] = useState(session.description)
   const [scheduledAt, setScheduledAt] = useState(session.scheduled_at ?? '')
+  const [publicVisible, setPublicVisible] = useState(session.public_visible ?? false)
+  const [publicDescription, setPublicDescription] = useState(session.public_description ?? '')
   const [savingInfo, setSavingInfo] = useState(false)
   const [savingSchedule, setSavingSchedule] = useState(false)
   const [contentItems, setContentItems] = useState<SessionContent[]>([])
@@ -421,8 +423,8 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
   async function handleSaveInfo() {
     setSavingInfo(true)
     try {
-      await upsertCourseSession({ ...session, title, description })
-      onSessionUpdate({ ...session, title, description })
+      await upsertCourseSession({ ...session, title, description, public_visible: publicVisible, public_description: publicDescription })
+      onSessionUpdate({ ...session, title, description, public_visible: publicVisible, public_description: publicDescription })
     } finally {
       setSavingInfo(false)
     }
@@ -537,7 +539,7 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
     onSessionUpdate({ ...session, reveal_index: 0 })
   }
 
-  const infoChanged = title !== session.title || description !== session.description
+  const infoChanged = title !== session.title || description !== session.description || publicVisible !== (session.public_visible ?? false) || publicDescription !== (session.public_description ?? '')
   const scheduleChanged = (scheduledAt || '') !== (session.scheduled_at ?? '')
   const hasDirty = useMemo(() => infoChanged || scheduleChanged || editingItem !== null, [infoChanged, scheduleChanged, editingItem])
   useAdminDirty(`session-${session.id}`, hasDirty)
@@ -561,6 +563,29 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
         <div>
           <p className="text-xs text-gray-500 mb-2 font-semibold">מועד מתוכנן</p>
           <DateTimePicker value={scheduledAt} onChange={setScheduledAt} />
+        </div>
+
+        {/* Public syllabus visibility */}
+        <div className="bg-white/[0.03] border border-white/10 rounded-lg p-3 space-y-2">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={publicVisible}
+              onChange={() => setPublicVisible(v => !v)}
+              className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30"
+            />
+            <span className="text-xs text-gray-300 font-medium">הצג בדף הסילבוס הציבורי</span>
+          </label>
+          {publicVisible && (
+            <textarea
+              value={publicDescription}
+              onChange={e => setPublicDescription(e.target.value)}
+              rows={2}
+              className={`${inputCls} resize-none text-xs`}
+              dir="rtl"
+              placeholder="תיאור שיווקי לדף הציבורי (אם ריק — ישתמש בתיאור הרגיל)"
+            />
+          )}
         </div>
 
         {(infoChanged || scheduleChanged) && (

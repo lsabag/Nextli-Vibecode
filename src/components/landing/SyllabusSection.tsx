@@ -23,7 +23,13 @@ export function SyllabusSection({ settings }: Props) {
 
   useEffect(() => {
     getPublicCourseSessions()
-      .then(data => { setSessions(data); setLoading(false) })
+      .then(data => {
+        // Only show sessions marked as public (or all if none have the field yet)
+        const hasPublicField = data.some(s => s.public_visible !== undefined)
+        const visible = hasPublicField ? data.filter(s => s.public_visible) : data
+        setSessions(visible)
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
 
@@ -68,7 +74,7 @@ export function SyllabusSection({ settings }: Props) {
                   מפגש {session.session_number}
                 </div>
                 <h3 className="text-white font-bold text-xl mb-3">{session.title}</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">{session.description}</p>
+                <p className="text-gray-400 text-sm leading-relaxed">{session.public_description || session.description}</p>
               </motion.div>
             )
           })}

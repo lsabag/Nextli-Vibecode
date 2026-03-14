@@ -138,6 +138,8 @@ export type Database = {
           reveal_index: number
           scheduled_at: string | null
           created_at: string
+          public_visible: boolean
+          public_description: string
         }
         Insert: {
           id?: string
@@ -149,6 +151,8 @@ export type Database = {
           reveal_index?: number
           scheduled_at?: string | null
           created_at?: string
+          public_visible?: boolean
+          public_description?: string
         }
         Update: {
           course_id?: string
@@ -157,6 +161,8 @@ export type Database = {
           status?: SessionStatus
           reveal_index?: number
           scheduled_at?: string | null
+          public_visible?: boolean
+          public_description?: string
         }
         Relationships: []
       }

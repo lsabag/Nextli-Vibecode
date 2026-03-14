@@ -16,6 +16,7 @@ const AccessibilityPage = lazy(() => import('@/pages/AccessibilityPage'))
 const PrivacyPage = lazy(() => import('@/pages/PrivacyPage'))
 const TermsPage = lazy(() => import('@/pages/TermsPage'))
 const PreparationPage = lazy(() => import('@/pages/PreparationPage'))
+const SyllabusPage = lazy(() => import('@/pages/SyllabusPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
 function PageLoader() {
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="/accessibility" element={<AccessibilityPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/syllabus" element={<SyllabusPage />} />
           <Route path="/preparation/:courseId" element={<PreparationPage />} />
           <Route
             path="/login"

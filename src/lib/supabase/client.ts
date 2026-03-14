@@ -120,6 +120,12 @@ const seedData: Record<string, unknown[]> = {
   wizard_answers: [],
   student_notes: [],
   session_feedback: [],
+  contact_messages: [
+    { id: 'msg-001', name: 'דני כהן', email: 'dani@example.com', message: 'מעוניין לשמוע עוד על הקורס, האם יש אפשרות לשיעור ניסיון?', ip: '1.2.3.4', status: 'new', handler_notes: '', handled_by: null, handled_at: null, is_read: false, created_at: '2026-03-10T14:30:00Z' },
+    { id: 'msg-002', name: 'שירה לוי', email: 'shira@example.com', message: 'האם הקורס מתאים למי שאין לו ניסיון בכלל בתכנות?', ip: '5.6.7.8', status: 'in_progress', handler_notes: 'שוחחתי איתה בטלפון, שלחתי מייל עם פרטים', handled_by: null, handled_at: null, is_read: true, created_at: '2026-03-08T09:15:00Z' },
+    { id: 'msg-003', name: 'יוסי אברהם', email: 'yossi@example.com', message: 'רוצה לדעת על מחירים והנחות לסטודנטים', ip: '9.10.11.12', status: 'resolved', handler_notes: 'נרשם לקורס הבא', handled_by: null, handled_at: '2026-03-07T16:00:00Z', is_read: true, created_at: '2026-03-05T11:00:00Z' },
+    { id: 'msg-004', name: 'מיכל רון', email: 'michal@example.com', message: 'שלום, אני מחפשת קורס לצוות שלי בחברה. האם יש מסלול לארגונים?', ip: '13.14.15.16', status: 'archived', handler_notes: 'לא רלוונטי כרגע, אין מסלול ארגוני', handled_by: null, handled_at: '2026-03-02T10:00:00Z', is_read: true, created_at: '2026-03-01T08:30:00Z' },
+  ],
   additional_courses: [],
   team_members: [],
   content_progress: [],

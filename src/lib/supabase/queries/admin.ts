@@ -1,5 +1,5 @@
 import { supabase } from '../client'
-import type { UserProfile, WizardStep, WizardAnswer, Course, CourseSession, SessionContent, PromptLibraryItem, AdditionalCourse, TeamMember, ContentTemplate } from '@/types'
+import type { UserProfile, WizardStep, WizardAnswer, Course, CourseSession, SessionContent, PromptLibraryItem, AdditionalCourse, TeamMember, ContentTemplate, ContactMessage } from '@/types'
 
 export async function getAdminUsers(): Promise<UserProfile[]> {
   const { data, error } = await supabase
@@ -349,6 +349,36 @@ export async function upsertContentTemplate(
 export async function deleteContentTemplate(id: string): Promise<void> {
   const { error } = await supabase
     .from('content_templates')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
+// ── Contact Messages ─────────────────────────────────────────────────────────
+
+export async function getAdminContactMessages(): Promise<ContactMessage[]> {
+  const { data, error } = await supabase
+    .from('contact_messages')
+    .select('*')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function updateContactMessage(
+  id: string,
+  updates: Partial<Pick<ContactMessage, 'status' | 'handler_notes' | 'handled_by' | 'handled_at' | 'is_read'>>
+): Promise<void> {
+  const { error } = await supabase
+    .from('contact_messages')
+    .update(updates)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteContactMessage(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('contact_messages')
     .delete()
     .eq('id', id)
   if (error) throw error

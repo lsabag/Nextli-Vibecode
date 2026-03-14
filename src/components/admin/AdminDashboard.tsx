@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
 import {
   Users, GraduationCap, BookOpen, UserPlus, Star,
@@ -106,6 +107,7 @@ function daysUntil(dateStr: string): string {
 export function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [, setSearchParams] = useSearchParams()
 
   useEffect(() => {
     loadStats()
@@ -484,7 +486,15 @@ export function AdminDashboard() {
         {/* Recent contact messages */}
         {stats.recentContactMessages.length > 0 && (
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 md:col-span-2">
-            <h3 className="text-sm font-bold text-white mb-4">פניות אחרונות</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-white">פניות אחרונות</h3>
+              <button
+                onClick={() => setSearchParams({ tab: 'students', sub: 'contact-messages' })}
+                className="text-[11px] text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              >
+                כל הפניות &larr;
+              </button>
+            </div>
             <div className="space-y-2">
               {stats.recentContactMessages.map((m, i) => (
                 <div key={i} className="flex items-start gap-3 bg-white/[0.03] rounded-lg p-3">

@@ -519,6 +519,45 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_messages: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          message: string
+          ip: string
+          status: 'new' | 'in_progress' | 'resolved' | 'archived'
+          handler_notes: string
+          handled_by: string | null
+          handled_at: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          message?: string
+          ip?: string
+          status?: 'new' | 'in_progress' | 'resolved' | 'archived'
+          handler_notes?: string
+          handled_by?: string | null
+          handled_at?: string | null
+          is_read?: boolean
+          created_at?: string
+        }
+        Update: {
+          name?: string
+          email?: string
+          message?: string
+          status?: 'new' | 'in_progress' | 'resolved' | 'archived'
+          handler_notes?: string
+          handled_by?: string | null
+          handled_at?: string | null
+          is_read?: boolean
+        }
+        Relationships: []
+      }
       session_feedback: {
         Row: {
           id: string

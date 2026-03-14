@@ -31,6 +31,7 @@ const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard').th
 const ShareSettingsManager = lazy(() => import('@/components/admin/ShareSettingsManager').then(m => ({ default: m.ShareSettingsManager })))
 const NavOrderManager = lazy(() => import('@/components/admin/NavOrderManager').then(m => ({ default: m.NavOrderManager })))
 const ContentTemplatesManager = lazy(() => import('@/components/admin/ContentTemplatesManager').then(m => ({ default: m.ContentTemplatesManager })))
+const ContactMessagesManager = lazy(() => import('@/components/admin/ContactMessagesManager').then(m => ({ default: m.ContactMessagesManager })))
 
 // ── Navigation structure ─────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ const navItems: NavItem[] = [
       { id: 'insights', label: 'תלמידים רשומים' },
       { id: 'wizard', label: 'שאלון קבלה' },
       { id: 'notes', label: 'הערות תלמידים' },
+      { id: 'contact-messages', label: 'פניות ולידים' },
     ],
   },
   {
@@ -419,6 +421,7 @@ function renderContent(activeId: string, onNavigate: (tab: string) => void) {
     case 'insights':          return <StudentInsights />
     case 'wizard':            return <WizardManager />
     case 'notes':             return <NotesViewer />
+    case 'contact-messages':  return <ContactMessagesManager />
     case 'manage':              return <CoursesManager />
     case 'content-templates':   return <ContentTemplatesManager />
     case 'prep':                return <PrepTabWrapper />

@@ -236,6 +236,23 @@ CREATE TABLE IF NOT EXISTS session_feedback (
   FOREIGN KEY (session_id) REFERENCES course_sessions(id) ON DELETE CASCADE
 );
 
+-- ─── contact_messages ─────────────────────────────────────────────────────
+-- Lead / contact tracking with status, notes, and handler info
+
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  message TEXT NOT NULL DEFAULT '',
+  ip TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'new' CHECK(status IN ('new', 'in_progress', 'resolved', 'archived')),
+  handler_notes TEXT NOT NULL DEFAULT '',
+  handled_by TEXT,
+  handled_at TEXT,
+  is_read INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ─── content_templates ────────────────────────────────────────────────────
 -- Reusable content blocks that can be added to any session (shared library)
 

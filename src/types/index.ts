@@ -17,6 +17,7 @@ export type Notification      = Database['public']['Tables']['notifications']['R
 export type PrepChecklistItem = Database['public']['Tables']['prep_checklist']['Row']
 export type ContentTemplate  = Database['public']['Tables']['content_templates']['Row']
 export type SessionFeedback  = Database['public']['Tables']['session_feedback']['Row']
+export type ContactMessage   = Database['public']['Tables']['contact_messages']['Row']
 
 export type { UserRole, PaymentStatus, FieldType, SessionStatus, ContentType, CourseStatus }
   from '@/lib/supabase/types'

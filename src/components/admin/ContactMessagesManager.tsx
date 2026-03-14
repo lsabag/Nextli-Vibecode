@@ -39,13 +39,21 @@ function formatDate(dateStr: string): string {
   } catch { return dateStr }
 }
 
-const DEFAULT_STALE_DAYS = 3
-const DEFAULT_ALERT_STATUSES = ['new']
+interface AlertRule {
+  enabled: boolean
+  days: number
+}
 
 interface AlertSettings {
-  staleDays: number
-  statuses: string[]
+  new: AlertRule
+  in_progress: AlertRule
   telegramEnabled: boolean
+}
+
+const DEFAULT_SETTINGS: AlertSettings = {
+  new: { enabled: true, days: 3 },
+  in_progress: { enabled: false, days: 5 },
+  telegramEnabled: true,
 }
 
 function daysOld(dateStr: string): number {
@@ -67,11 +75,7 @@ export function ContactMessagesManager() {
   const [students, setStudents] = useState<UserProfile[]>([])
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
-  const [alertSettings, setAlertSettings] = useState<AlertSettings>({
-    staleDays: DEFAULT_STALE_DAYS,
-    statuses: DEFAULT_ALERT_STATUSES,
-    telegramEnabled: true,
-  })
+  const [alertSettings, setAlertSettings] = useState<AlertSettings>(DEFAULT_SETTINGS)
   const [savingSettings, setSavingSettings] = useState(false)
 
   useEffect(() => {
@@ -108,7 +112,7 @@ export function ContactMessagesManager() {
 
   async function loadAlertSettings() {
     try {
-      const keys = ['alert_stale_days', 'alert_statuses', 'alert_telegram_enabled']
+      const keys = ['alert_new_enabled', 'alert_new_days', 'alert_in_progress_enabled', 'alert_in_progress_days', 'alert_telegram_enabled']
       const { data } = await supabase.from('system_settings').select('*')
       const rows = (data ?? []) as Array<{ key: string; value: string }>
       const map: Record<string, string> = {}
@@ -116,8 +120,14 @@ export function ContactMessagesManager() {
         if (keys.includes(r.key)) map[r.key] = r.value
       }
       setAlertSettings({
-        staleDays: parseInt(map.alert_stale_days, 10) || DEFAULT_STALE_DAYS,
-        statuses: map.alert_statuses ? map.alert_statuses.split(',').filter(Boolean) : DEFAULT_ALERT_STATUSES,
+        new: {
+          enabled: map.alert_new_enabled !== 'false',
+          days: parseInt(map.alert_new_days, 10) || DEFAULT_SETTINGS.new.days,
+        },
+        in_progress: {
+          enabled: map.alert_in_progress_enabled === 'true',
+          days: parseInt(map.alert_in_progress_days, 10) || DEFAULT_SETTINGS.in_progress.days,
+        },
         telegramEnabled: map.alert_telegram_enabled !== 'false',
       })
     } catch {
@@ -129,8 +139,10 @@ export function ContactMessagesManager() {
     setSavingSettings(true)
     try {
       const entries = [
-        { key: 'alert_stale_days', value: String(updated.staleDays) },
-        { key: 'alert_statuses', value: updated.statuses.join(',') },
+        { key: 'alert_new_enabled', value: String(updated.new.enabled) },
+        { key: 'alert_new_days', value: String(updated.new.days) },
+        { key: 'alert_in_progress_enabled', value: String(updated.in_progress.enabled) },
+        { key: 'alert_in_progress_days', value: String(updated.in_progress.days) },
         { key: 'alert_telegram_enabled', value: String(updated.telegramEnabled) },
       ]
       for (const { key, value } of entries) {
@@ -224,7 +236,15 @@ export function ContactMessagesManager() {
     archived: messages.filter(m => m.status === 'archived').length,
   }
 
-  const staleCount = messages.filter(m => alertSettings.statuses.includes(m.status) && daysOld(m.created_at) >= alertSettings.staleDays).length
+  function isStale(m: ContactMessage): boolean {
+    const rule = alertSettings[m.status as 'new' | 'in_progress']
+    return !!rule?.enabled && daysOld(m.created_at) >= rule.days
+  }
+
+  const staleNewCount = alertSettings.new.enabled
+    ? messages.filter(m => m.status === 'new' && daysOld(m.created_at) >= alertSettings.new.days).length : 0
+  const staleInProgressCount = alertSettings.in_progress.enabled
+    ? messages.filter(m => m.status === 'in_progress' && daysOld(m.created_at) >= alertSettings.in_progress.days).length : 0
 
   if (loading) {
     return (
@@ -265,48 +285,35 @@ export function ContactMessagesManager() {
             <span className="text-sm font-medium text-white">הגדרות התראות</span>
           </div>
 
-          {/* Stale days */}
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-gray-400 whitespace-nowrap">התרע אחרי</label>
-            <input
-              type="number"
-              min={1}
-              max={30}
-              value={alertSettings.staleDays}
-              onChange={e => setAlertSettings(s => ({ ...s, staleDays: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
-              className="w-16 bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white text-center outline-none focus:border-blue-500/50"
-            />
-            <span className="text-xs text-gray-400">ימים</span>
-          </div>
-
-          {/* Statuses to alert on */}
-          <div>
-            <label className="text-xs text-gray-400 block mb-2">סטטוסים שמפעילים התראה:</label>
-            <div className="flex items-center gap-3 flex-wrap">
-              {(['new', 'in_progress'] as const).map(s => {
-                const cfg = STATUS_CONFIG[s]
-                const checked = alertSettings.statuses.includes(s)
-                return (
-                  <label key={s} className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => {
-                        setAlertSettings(prev => ({
-                          ...prev,
-                          statuses: checked
-                            ? prev.statuses.filter(x => x !== s)
-                            : [...prev.statuses, s],
-                        }))
-                      }}
-                      className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30"
-                    />
-                    <span className={`text-xs ${cfg.color}`}>{cfg.label}</span>
-                  </label>
-                )
-              })}
-            </div>
-          </div>
+          {/* Alert rules — one per status */}
+          {(['new', 'in_progress'] as const).map(status => {
+            const cfg = STATUS_CONFIG[status]
+            const rule = alertSettings[status]
+            return (
+              <div key={status} className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${rule.enabled ? 'bg-white/[0.03] border-white/10' : 'bg-white/[0.01] border-white/5 opacity-60'}`}>
+                <input
+                  type="checkbox"
+                  checked={rule.enabled}
+                  onChange={() => setAlertSettings(s => ({ ...s, [status]: { ...s[status], enabled: !rule.enabled } }))}
+                  className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30"
+                />
+                <cfg.icon size={14} className={cfg.color} />
+                <span className={`text-xs font-medium ${cfg.color} min-w-[50px]`}>{cfg.label}</span>
+                <span className="text-xs text-gray-400">—</span>
+                <span className="text-xs text-gray-400">התרע אחרי</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={rule.days}
+                  disabled={!rule.enabled}
+                  onChange={e => setAlertSettings(s => ({ ...s, [status]: { ...s[status], days: Math.max(1, parseInt(e.target.value, 10) || 1) } }))}
+                  className="w-14 bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1 text-xs text-white text-center outline-none focus:border-blue-500/50 disabled:opacity-40"
+                />
+                <span className="text-xs text-gray-400">ימים</span>
+              </div>
+            )
+          })}
 
           {/* Telegram toggle */}
           <div className="flex items-center gap-3">
@@ -378,13 +385,22 @@ export function ContactMessagesManager() {
         </div>
       </div>
 
-      {/* Stale alert */}
-      {staleCount > 0 && (
+      {/* Stale alerts — separate for each status */}
+      {staleNewCount > 0 && (
+        <div className="flex items-center gap-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-3">
+          <AlertCircle size={16} className="text-blue-400 shrink-0" />
+          <p className="text-xs text-blue-300">
+            <span className="font-bold">{staleNewCount} {staleNewCount === 1 ? 'פנייה חדשה' : 'פניות חדשות'}</span>
+            {' '}ממתינות יותר מ-{alertSettings.new.days} ימים ללא טיפול
+          </p>
+        </div>
+      )}
+      {staleInProgressCount > 0 && (
         <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
-          <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+          <Clock size={16} className="text-amber-400 shrink-0" />
           <p className="text-xs text-amber-300">
-            <span className="font-bold">{staleCount} {staleCount === 1 ? 'פנייה ממתינה' : 'פניות ממתינות'}</span>
-            {' '}יותר מ-{alertSettings.staleDays} ימים ללא טיפול
+            <span className="font-bold">{staleInProgressCount} {staleInProgressCount === 1 ? 'פנייה בטיפול' : 'פניות בטיפול'}</span>
+            {' '}כבר יותר מ-{alertSettings.in_progress.days} ימים
           </p>
         </div>
       )}
@@ -445,7 +461,7 @@ export function ContactMessagesManager() {
                   </div>
 
                   <div className="text-left shrink-0 flex items-center gap-2">
-                    {alertSettings.statuses.includes(msg.status) && daysOld(msg.created_at) >= alertSettings.staleDays && (
+                    {isStale(msg) && (
                       <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">
                         <AlertTriangle size={10} />
                         {daysOld(msg.created_at)} ימים

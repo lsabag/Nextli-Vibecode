@@ -84,33 +84,40 @@ function newSession(courseId: string, order: number): Omit<CourseSession, 'creat
 
 // ── Prompt Editor (Hebrew + English) ─────────────────────────────────────────
 
-function parsePromptContent(content: string): { he: string; en: string } {
-  if (!content) return { he: '', en: '' }
+function parsePromptContent(content: string): { he: string; en: string; prefix: string } {
+  if (!content) return { he: '', en: '', prefix: '' }
   try {
     const parsed = JSON.parse(content)
     if (parsed && typeof parsed === 'object' && ('he' in parsed || 'en' in parsed)) {
-      return { he: parsed.he || '', en: parsed.en || '' }
+      return { he: parsed.he || '', en: parsed.en || '', prefix: parsed.prefix || '' }
     }
   } catch { /* not JSON — legacy plain text */ }
   // Legacy: plain text treated as English
-  return { he: '', en: content }
+  return { he: '', en: content, prefix: '' }
 }
 
 function PromptEditor({ content, onChange, inputCls }: { content: string; onChange: (c: string) => void; inputCls: string }) {
-  const { he, en } = parsePromptContent(content)
+  const { he, en, prefix } = parsePromptContent(content)
 
-  function update(field: 'he' | 'en', value: string) {
-    const updated = field === 'he' ? { he: value, en } : { he, en: value }
-    // If both empty, store empty string; otherwise JSON
-    if (!updated.he && !updated.en) {
+  function update(field: 'he' | 'en' | 'prefix', value: string) {
+    const current = { he, en, prefix }
+    current[field] = value
+    if (!current.he && !current.en && !current.prefix) {
       onChange('')
     } else {
-      onChange(JSON.stringify(updated))
+      onChange(JSON.stringify(current))
     }
   }
 
   return (
     <div className="space-y-3">
+      <div>
+        <label className="block text-xs text-gray-400 mb-1 font-medium" dir="rtl">טקסט מקדים (יופיע מעל הפרומפט)</label>
+        <RichTextEditor
+          content={prefix || '<p></p>'}
+          onChange={html => update('prefix', html)}
+        />
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-gray-400 mb-1 font-medium" dir="rtl">פרומפט בעברית</label>
@@ -134,6 +141,55 @@ function PromptEditor({ content, onChange, inputCls }: { content: string; onChan
       <p className="text-xs text-gray-600">
         אפשר למלא שדה אחד או שניהם. אם שניהם מלאים — התלמיד יראה אותם זה לצד זה עם כפתור העתקה לכל אחד.
       </p>
+    </div>
+  )
+}
+
+// ── Feedback Editor (custom questions) ───────────────────────────────────────
+
+function parseFeedbackConfig(content: string): { q1: string; q2: string; showRating: boolean } {
+  const defaults = { q1: '', q2: '', showRating: true }
+  if (!content) return defaults
+  try {
+    const parsed = JSON.parse(content)
+    if (parsed && typeof parsed === 'object') {
+      return { q1: parsed.q1 || '', q2: parsed.q2 || '', showRating: parsed.showRating !== false }
+    }
+  } catch { /* not JSON */ }
+  return defaults
+}
+
+function FeedbackEditor({ content, onChange, inputCls }: { content: string; onChange: (c: string) => void; inputCls: string }) {
+  const config = parseFeedbackConfig(content)
+
+  function update(field: string, value: unknown) {
+    const current = { ...config, [field]: value }
+    onChange(JSON.stringify(current))
+  }
+
+  return (
+    <div className="space-y-3 bg-purple-500/5 border border-purple-500/20 rounded-lg p-3">
+      <p className="text-xs text-gray-500">התאם אישית את שאלות הפידבק. השאר ריק לשאלות ברירת מחדל.</p>
+      <div>
+        <label className="block text-xs text-gray-400 mb-1 font-medium">שאלה 1 (ברירת מחדל: "מה למדתי במפגש הזה?")</label>
+        <input type="text" value={config.q1}
+          onChange={e => update('q1', e.target.value)}
+          placeholder="מה למדתי במפגש הזה?"
+          className={inputCls} dir="rtl" />
+      </div>
+      <div>
+        <label className="block text-xs text-gray-400 mb-1 font-medium">שאלה 2 (ברירת מחדל: "מה חסר לי? מה לא הבנתי?")</label>
+        <input type="text" value={config.q2}
+          onChange={e => update('q2', e.target.value)}
+          placeholder="מה חסר לי? מה לא הבנתי?"
+          className={inputCls} dir="rtl" />
+      </div>
+      <label className="flex items-center gap-2 text-xs text-gray-400">
+        <input type="checkbox" checked={config.showRating}
+          onChange={e => update('showRating', e.target.checked)}
+          className="accent-purple-500" />
+        הצג דירוג כוכבים
+      </label>
     </div>
   )
 }
@@ -231,9 +287,7 @@ function ContentBlockEditor({ item, onChange, onSave, onCancel, saving, courseId
       ) : item.content_type === 'prompt' ? (
         <PromptEditor content={item.content} onChange={content => onChange({ ...item, content })} inputCls={inputCls} />
       ) : item.content_type === 'feedback' ? (
-        <p className="text-xs text-gray-500 bg-purple-500/5 border border-purple-500/20 rounded-lg p-3">
-          בלוק פידבק — התלמיד יוכל לכתוב מה למד ומה חסר לו. הנתונים יופיעו בלשונית "הערות תלמידים".
-        </p>
+        <FeedbackEditor content={item.content} onChange={content => onChange({ ...item, content })} inputCls={inputCls} />
       ) : item.content_type === 'prep' ? (
         <PrepBlockSummary courseId={courseId} sessionId={item.session_id} />
       ) : (

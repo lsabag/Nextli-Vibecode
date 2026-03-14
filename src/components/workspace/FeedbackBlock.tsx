@@ -2,9 +2,26 @@ import { useState, useEffect, useRef } from 'react'
 import { getSessionFeedback, upsertSessionFeedback } from '@/lib/supabase/queries/workspace'
 import { MessageSquare, Star } from 'lucide-react'
 
-type Props = { userId: string; sessionId: string }
+type Props = { userId: string; sessionId: string; config?: string }
 
-export function FeedbackBlock({ userId, sessionId }: Props) {
+function parseFeedbackConfig(content?: string): { q1: string; q2: string; showRating: boolean } {
+  const defaults = { q1: 'מה למדתי במפגש הזה?', q2: 'מה חסר לי? מה לא הבנתי?', showRating: true }
+  if (!content) return defaults
+  try {
+    const parsed = JSON.parse(content)
+    if (parsed && typeof parsed === 'object') {
+      return {
+        q1: parsed.q1 || defaults.q1,
+        q2: parsed.q2 || defaults.q2,
+        showRating: parsed.showRating !== false,
+      }
+    }
+  } catch { /* not JSON */ }
+  return defaults
+}
+
+export function FeedbackBlock({ userId, sessionId, config: configStr }: Props) {
+  const feedbackConfig = parseFeedbackConfig(configStr)
   const [learned, setLearned] = useState('')
   const [missing, setMissing] = useState('')
   const [rating, setRating] = useState<number | null>(null)
@@ -54,26 +71,28 @@ export function FeedbackBlock({ userId, sessionId }: Props) {
       </div>
 
       {/* Star rating */}
-      <div className="flex items-center gap-1 mb-4">
-        <span className="text-xs text-gray-500 ml-2">דירוג:</span>
-        {[1, 2, 3, 4, 5].map(n => (
-          <button
-            key={n}
-            onClick={() => { setRating(n); scheduleSave(learned, missing, n) }}
-            className="p-0.5 transition-colors"
-            aria-label={`דרג ${n} מתוך 5`}
-          >
-            <Star
-              size={20}
-              className={n <= (rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}
-            />
-          </button>
-        ))}
-      </div>
+      {feedbackConfig.showRating && (
+        <div className="flex items-center gap-1 mb-4">
+          <span className="text-xs text-gray-500 ml-2">דירוג:</span>
+          {[1, 2, 3, 4, 5].map(n => (
+            <button
+              key={n}
+              onClick={() => { setRating(n); scheduleSave(learned, missing, n) }}
+              className="p-0.5 transition-colors"
+              aria-label={`דרג ${n} מתוך 5`}
+            >
+              <Star
+                size={20}
+                className={n <= (rating ?? 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}
+              />
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="space-y-3">
         <div>
-          <label className="text-xs text-gray-400 mb-1 block">מה למדתי במפגש הזה?</label>
+          <label className="text-xs text-gray-400 mb-1 block">{feedbackConfig.q1}</label>
           <textarea
             value={learned}
             onChange={e => { setLearned(e.target.value); scheduleSave(e.target.value, missing, rating) }}
@@ -83,7 +102,7 @@ export function FeedbackBlock({ userId, sessionId }: Props) {
           />
         </div>
         <div>
-          <label className="text-xs text-gray-400 mb-1 block">מה חסר לי? מה לא הבנתי?</label>
+          <label className="text-xs text-gray-400 mb-1 block">{feedbackConfig.q2}</label>
           <textarea
             value={missing}
             onChange={e => { setMissing(e.target.value); scheduleSave(learned, e.target.value, rating) }}

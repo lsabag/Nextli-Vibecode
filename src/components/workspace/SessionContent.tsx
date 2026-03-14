@@ -71,15 +71,15 @@ function ContentCheckbox({ checked, onToggle, label }: { checked: boolean; onTog
   )
 }
 
-function parsePromptContent(content: string): { he: string; en: string } {
-  if (!content) return { he: '', en: '' }
+function parsePromptContent(content: string): { he: string; en: string; prefix: string } {
+  if (!content) return { he: '', en: '', prefix: '' }
   try {
     const parsed = JSON.parse(content)
     if (parsed && typeof parsed === 'object' && ('he' in parsed || 'en' in parsed)) {
-      return { he: parsed.he || '', en: parsed.en || '' }
+      return { he: parsed.he || '', en: parsed.en || '', prefix: parsed.prefix || '' }
     }
   } catch { /* not JSON — legacy plain text */ }
-  return { he: '', en: content }
+  return { he: '', en: content, prefix: '' }
 }
 
 function CopyButton({ text, label }: { text: string; label?: string }) {
@@ -106,7 +106,7 @@ function CopyButton({ text, label }: { text: string; label?: string }) {
 }
 
 function PromptBlock({ title, content, checkbox }: { title: string; content: string; checkbox: React.ReactNode }) {
-  const { he, en } = parsePromptContent(content)
+  const { he, en, prefix } = parsePromptContent(content)
   const hasBoth = !!he && !!en
 
   return (
@@ -114,6 +114,9 @@ function PromptBlock({ title, content, checkbox }: { title: string; content: str
       {checkbox}
       <div className="flex-1 bg-purple-500/5 border border-purple-500/20 rounded-xl p-5">
         <h3 className="text-white font-semibold text-sm mb-3">{title}</h3>
+        {prefix && prefix !== '<p></p>' && (
+          <div className="text-gray-300 text-sm leading-relaxed mb-3 prose prose-invert prose-sm max-w-none" dir="rtl" dangerouslySetInnerHTML={{ __html: prefix }} />
+        )}
 
         {hasBoth ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -355,7 +358,7 @@ export function SessionContent({ session, course, userId, progress }: Props) {
                 <div key={item.id} className="flex items-start gap-3">
                   {checkbox}
                   <div className="flex-1 min-w-0">
-                    <FeedbackBlock userId={userId} sessionId={session.id} />
+                    <FeedbackBlock userId={userId} sessionId={session.id} config={item.content} />
                   </div>
                 </div>
               ) : null

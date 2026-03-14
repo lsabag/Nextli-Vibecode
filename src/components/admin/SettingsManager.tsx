@@ -7,6 +7,10 @@ type SettingRow = { key: string; value: string; dirty: boolean }
 
 // FOMO settings are managed in the dedicated "באנר FOMO" tab
 const FOMO_KEYS = new Set(['fomo_banner_active', 'fomo_text', 'fomo_variant', 'fomo_end_time', 'fomo_cta_text', 'fomo_cta_link'])
+// OG/share settings managed in dedicated ShareSettingsManager
+const OG_KEYS = new Set(['og_title', 'og_description', 'og_image', 'og_url'])
+// Nav config managed in NavOrderManager
+const NAV_CONFIG_KEYS = new Set(['admin_nav_config'])
 // Prompt showcase settings are managed in the dedicated prompt showcase tab
 const PROMPT_KEYS_PREFIX = ['terminal_', 'beforeafter_', 'beforeafter_bad_', 'beforeafter_good_', 'cards_', 'chat_']
 
@@ -475,7 +479,7 @@ function SettingsRenderer({ sections, title, defaultCollapsed = false }: Setting
     setFetchError(null)
     getAdminSystemSettings().then(map => {
       const existing = Object.entries(map)
-        .filter(([key]) => !FOMO_KEYS.has(key) && !isPromptShowcaseKey(key))
+        .filter(([key]) => !FOMO_KEYS.has(key) && !OG_KEYS.has(key) && !NAV_CONFIG_KEYS.has(key) && !isPromptShowcaseKey(key))
         .map(([key, value]) => ({ key, value, dirty: false }))
       // Add missing section keys with empty default so fields are always visible
       const existingKeys = new Set(existing.map(r => r.key))

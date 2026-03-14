@@ -22,6 +22,8 @@ export function SEOHead({ title, description, noindex }: SEOHeadProps) {
       <meta property="og:type" content="website" />
       <meta property="og:locale" content="he_IL" />
       <meta property="og:site_name" content={SITE_NAME} />
+      <meta property="og:image" content="https://vibe.nextli.co.il/og-image.png" />
+      <meta property="og:url" content="https://vibe.nextli.co.il/" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={desc} />

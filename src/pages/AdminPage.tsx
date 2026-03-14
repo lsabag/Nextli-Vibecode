@@ -6,9 +6,11 @@ import { SEOHead } from '@/components/shared/SEOHead'
 import { AdminDirtyProvider, UnsavedChangesDialog, useAdminDirty } from '@/hooks/useAdminDirty'
 import {
   LayoutDashboard, Users, GraduationCap, Home, Settings, Menu,
-  ChevronDown, ClipboardCheck, Search, X, Monitor,
+  ChevronDown, ClipboardCheck, Search, X, Monitor, Share2, ListOrdered,
 } from 'lucide-react'
 import { getSettingsSearchIndex } from '@/components/admin/SettingsManager'
+import { updateSystemSetting } from '@/lib/supabase/queries/admin'
+import type { NavOrderItem } from '@/components/admin/NavOrderManager'
 
 const StudentInsights = lazy(() => import('@/components/admin/StudentInsights').then(m => ({ default: m.StudentInsights })))
 const WizardManager = lazy(() => import('@/components/admin/WizardManager').then(m => ({ default: m.WizardManager })))
@@ -26,6 +28,8 @@ const IntakeManager = lazy(() => import('@/components/admin/IntakeManager').then
 const FeedbackViewer = lazy(() => import('@/components/admin/FeedbackViewer').then(m => ({ default: m.FeedbackViewer })))
 const ImageAltAudit = lazy(() => import('@/components/admin/ImageAltAudit').then(m => ({ default: m.ImageAltAudit })))
 const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
+const ShareSettingsManager = lazy(() => import('@/components/admin/ShareSettingsManager').then(m => ({ default: m.ShareSettingsManager })))
+const NavOrderManager = lazy(() => import('@/components/admin/NavOrderManager').then(m => ({ default: m.NavOrderManager })))
 
 // ── Navigation structure ─────────────────────────────────────────────────────
 
@@ -79,6 +83,7 @@ const navItems: NavItem[] = [
       { id: 'landing-settings', label: 'הגדרות דף הבית' },
       { id: 'landing-content', label: 'תוכן דינמי' },
       { id: 'prompt-showcase', label: 'סקשן פרומפטים' },
+      { id: 'share-settings', label: 'הגדרות שיתוף' },
     ],
   },
   {
@@ -97,22 +102,100 @@ const navItems: NavItem[] = [
   },
   {
     id: 'settings',
-    label: 'הגדרות כלליות',
+    label: 'הגדרות',
     icon: <Settings size={18} />,
+    children: [
+      { id: 'general-settings', label: 'הגדרות כלליות' },
+      { id: 'nav-order', label: 'סידור תפריט' },
+    ],
   },
 ]
 
-// Flat lookup: child id → parent id
-const childToParent = new Map<string, string>()
-const allIds = new Set<string>()
-for (const item of navItems) {
-  allIds.add(item.id)
-  if (item.children) {
-    for (const child of item.children) {
-      childToParent.set(child.id, item.id)
-      allIds.add(child.id)
+// Flat lookup helpers — built from current navItems (default)
+function buildNavLookups(items: NavItem[]) {
+  const childToParent = new Map<string, string>()
+  const allIds = new Set<string>()
+  for (const item of items) {
+    allIds.add(item.id)
+    if (item.children) {
+      for (const child of item.children) {
+        childToParent.set(child.id, item.id)
+        allIds.add(child.id)
+      }
     }
   }
+  return { childToParent, allIds }
+}
+
+// Default lookups (used at module level for search index etc.)
+const { childToParent, allIds } = buildNavLookups(navItems)
+
+// Icon map — maps group id to its icon element
+const NAV_ICONS: Record<string, React.ReactNode> = {
+  dashboard: <LayoutDashboard size={18} />,
+  health: <ClipboardCheck size={18} />,
+  students: <Users size={18} />,
+  courses: <GraduationCap size={18} />,
+  landing: <Home size={18} />,
+  'student-area': <Monitor size={18} />,
+  settings: <Settings size={18} />,
+}
+
+// Nav config stored in system_settings as JSON
+type NavConfig = {
+  id: string
+  label?: string
+  hidden?: boolean
+  children?: { id: string; label?: string; hidden?: boolean }[]
+}[]
+
+function applyNavConfig(defaults: NavItem[], config: NavConfig | null): NavItem[] {
+  if (!config) return defaults
+  const defaultMap = new Map(defaults.map(d => [d.id, d]))
+  const result: NavItem[] = []
+  const seen = new Set<string>()
+
+  for (const cfg of config) {
+    const def = defaultMap.get(cfg.id)
+    if (!def) continue
+    seen.add(cfg.id)
+
+    let children = def.children
+    if (cfg.children && def.children) {
+      const childMap = new Map(def.children.map(c => [c.id, c]))
+      const orderedChildren: NavItem['children'] = []
+      const seenChildren = new Set<string>()
+      for (const cc of cfg.children) {
+        const dc = childMap.get(cc.id)
+        if (!dc) continue
+        seenChildren.add(cc.id)
+        if (!cc.hidden) {
+          orderedChildren.push({ id: dc.id, label: cc.label || dc.label })
+        }
+      }
+      // Add any new children not in config
+      for (const dc of def.children) {
+        if (!seenChildren.has(dc.id)) orderedChildren.push(dc)
+      }
+      children = orderedChildren
+    }
+
+    if (!cfg.hidden) {
+      result.push({
+        ...def,
+        label: cfg.label || def.label,
+        icon: NAV_ICONS[cfg.id] || def.icon,
+        children,
+      })
+    }
+  }
+
+  // Add any new items not in config
+  for (const def of defaults) {
+    if (!seen.has(def.id)) result.push(def)
+  }
+
+  return result
 }
 
 // ── Search index ─────────────────────────────────────────────────────────────
@@ -346,7 +429,9 @@ function renderContent(activeId: string, onNavigate: (tab: string) => void) {
     case 'landing-settings':  return <LandingPageSettings />
     case 'landing-content':   return <LandingManager />
     case 'prompt-showcase':   return <PromptShowcaseManager />
+    case 'share-settings':    return <ShareSettingsManager />
     case 'settings':          return <SettingsManager />
+    case 'general-settings':  return <SettingsManager />
     default:                  return <AdminDashboard />
   }
 }
@@ -369,8 +454,10 @@ function AdminPageInner() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [siteContent, setSiteContent] = useState<SiteContent | undefined>()
+  const [navConfig, setNavConfig] = useState<NavConfig | null>(null)
+  const [navConfigOriginal, setNavConfigOriginal] = useState<NavConfig | null>(null)
 
-  // Load site content for extended search
+  // Load site content for extended search + nav config
   useEffect(() => {
     Promise.all([
       supabase.from('system_settings').select('*'),
@@ -388,8 +475,20 @@ function AdminPageInner() {
         additionalCourses: (addCoursesRes.data ?? []) as SiteContent['additionalCourses'],
         teamMembers: (teamRes.data ?? []) as SiteContent['teamMembers'],
       })
+      // Load nav config
+      if (settings.admin_nav_config) {
+        try {
+          const parsed = JSON.parse(settings.admin_nav_config) as NavConfig
+          setNavConfig(parsed)
+          setNavConfigOriginal(parsed)
+        } catch { /* invalid JSON — use defaults */ }
+      }
     })
   }, [])
+
+  // Effective nav items (defaults + config overrides)
+  const effectiveNav = useMemo(() => applyNavConfig(navItems, navConfig), [navConfig])
+  const effectiveLookups = useMemo(() => buildNavLookups(effectiveNav), [effectiveNav])
 
   const searchIndex = useMemo(() => buildSearchIndex(siteContent), [siteContent])
 
@@ -408,22 +507,25 @@ function AdminPageInner() {
     const tab = searchParams.get('tab')
     const sub = searchParams.get('sub')
     // New format: ?tab=students&sub=wizard → wizard
-    if (sub && allIds.has(sub)) return sub
+    if (sub && effectiveLookups.allIds.has(sub)) return sub
     // Legacy format: ?tab=wizard → wizard
+    if (tab && effectiveLookups.allIds.has(tab)) return tab
+    // Also check default allIds for backward compat
+    if (sub && allIds.has(sub)) return sub
     if (tab && allIds.has(tab)) return tab
     // Legacy main group without sub: ?tab=students → first child
     if (tab) {
-      const item = navItems.find(n => n.id === tab)
+      const item = effectiveNav.find(n => n.id === tab)
       if (item?.children) return item.children[0].id
     }
     return 'dashboard'
-  }, [searchParams])
+  }, [searchParams, effectiveLookups, effectiveNav])
 
   const activeId = resolveActive()
 
   // Auto-expand the group containing the active item & scroll to top
   useEffect(() => {
-    const parentId = childToParent.get(activeId)
+    const parentId = effectiveLookups.childToParent.get(activeId) || childToParent.get(activeId)
     if (parentId) {
       setExpandedGroups(prev => {
         if (prev.has(parentId)) return prev
@@ -434,12 +536,12 @@ function AdminPageInner() {
     }
     // Reset scroll when switching pages
     document.getElementById('main-content')?.scrollTo(0, 0)
-  }, [activeId])
+  }, [activeId, effectiveLookups])
 
   const dirtyCtx = useAdminDirty()
 
   const doNavigate = useCallback((id: string) => {
-    const parentId = childToParent.get(id)
+    const parentId = effectiveLookups.childToParent.get(id) || childToParent.get(id)
     if (parentId) {
       setSearchParams({ tab: parentId, sub: id })
     } else {
@@ -448,7 +550,7 @@ function AdminPageInner() {
     setSidebarOpen(false)
     setSearchQuery('')
     setSearchFocused(false)
-  }, [setSearchParams])
+  }, [setSearchParams, effectiveLookups])
 
   const navigate = useCallback((id: string) => {
     dirtyCtx.confirmNavigation(() => doNavigate(id))
@@ -469,6 +571,61 @@ function AdminPageInner() {
 
   const isChildActive = (item: NavItem) =>
     item.children?.some(c => c.id === activeId) ?? false
+
+  // ── Nav order management ──────────────────────────────────────────
+  const navOrderItems: NavOrderItem[] = useMemo(() => {
+    // Build from current config or defaults
+    const source = navConfig || navItems.map(item => ({
+      id: item.id,
+      label: item.label,
+      hidden: false,
+      children: item.children?.map(c => ({ id: c.id, label: c.label, hidden: false })),
+    }))
+    // Ensure all defaults are represented
+    const ids = new Set(source.map(s => s.id))
+    const result = [...source]
+    for (const def of navItems) {
+      if (!ids.has(def.id)) {
+        result.push({
+          id: def.id,
+          label: def.label,
+          hidden: false,
+          children: def.children?.map(c => ({ id: c.id, label: c.label, hidden: false })),
+        })
+      }
+    }
+    return result as NavOrderItem[]
+  }, [navConfig])
+
+  const [navOrderLocal, setNavOrderLocal] = useState<NavOrderItem[] | null>(null)
+  const navOrderDisplay = navOrderLocal ?? navOrderItems
+  const navOrderDirty = navOrderLocal !== null && JSON.stringify(navOrderLocal) !== JSON.stringify(navOrderItems)
+
+  function handleNavOrderChange(items: NavOrderItem[]) {
+    setNavOrderLocal(items)
+  }
+
+  async function handleNavOrderSave(items: NavOrderItem[]) {
+    const config: NavConfig = items.map(item => ({
+      id: item.id,
+      label: item.label,
+      hidden: item.hidden,
+      children: item.children?.map(c => ({ id: c.id, label: c.label, hidden: c.hidden })),
+    }))
+    await updateSystemSetting('admin_nav_config', JSON.stringify(config))
+    setNavConfig(config)
+    setNavConfigOriginal(config)
+    setNavOrderLocal(null)
+  }
+
+  function handleNavOrderReset() {
+    setNavOrderLocal(null)
+    // Reset to defaults
+    if (navConfigOriginal) {
+      setNavConfig(null)
+      updateSystemSetting('admin_nav_config', '')
+    }
+  }
 
   return (
     <div className="h-screen bg-[#0a0a0f] flex overflow-hidden" dir="rtl">
@@ -558,7 +715,7 @@ function AdminPageInner() {
 
         {/* Nav items */}
         <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
-          {navItems.map(item => {
+          {effectiveNav.map(item => {
             const hasChildren = !!item.children
             const isExpanded = expandedGroups.has(item.id)
             const isActive = activeId === item.id || isChildActive(item)
@@ -633,7 +790,17 @@ function AdminPageInner() {
       <main className="flex-1 overflow-y-auto h-screen" id="main-content">
         <div className="max-w-6xl mx-auto p-4 md:p-8 pt-16 md:pt-8">
           <Suspense fallback={<div className="flex justify-center py-12"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>}>
-            {renderContent(activeId, navigate)}
+            {activeId === 'nav-order' ? (
+              <NavOrderManager
+                items={navOrderDisplay}
+                onChange={handleNavOrderChange}
+                onSave={handleNavOrderSave}
+                onReset={handleNavOrderReset}
+                dirty={navOrderDirty}
+              />
+            ) : (
+              renderContent(activeId, navigate)
+            )}
           </Suspense>
         </div>
       </main>

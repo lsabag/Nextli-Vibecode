@@ -8,9 +8,10 @@ type Props = {
 
 export function WizardStepField({ step, value, onChange }: Props) {
   if (step.field_type === 'select' && step.options) {
+    const opts: string[] = typeof step.options === 'string' ? JSON.parse(step.options) : step.options
     return (
       <div className="flex flex-col gap-3">
-        {(step.options as string[]).map((option: string) => (
+        {opts.map((option: string) => (
           <button
             key={option}
             type="button"

@@ -181,7 +181,7 @@ export function HeroSection({ settings, user, profile }: Props) {
         </motion.div>
 
         {/* Social proof */}
-        {waitlistCount > 0 && (
+        {waitlistCount > 0 && settings.hero_show_waitlist_count !== 'false' && (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

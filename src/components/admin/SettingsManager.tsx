@@ -30,6 +30,7 @@ const settingLabels: Record<string, string> = {
   hero_cta_primary:    'טקסט כפתור ראשי',
   hero_cta_secondary:  'טקסט כפתור משני',
   hero_features:       'כרטיסי פיצ\'רים',
+  hero_show_waitlist_count: 'הצג מונה נרשמים (true/false)',
 
   // Syllabus
   syllabus_heading:    'כותרת',
@@ -102,7 +103,7 @@ const LANDING_SECTIONS: Section[] = [
   {
     title: 'Hero — ראש העמוד',
     icon: '🏠',
-    keys: ['hero_headline', 'hero_subheadline', 'hero_description', 'hero_badge_text', 'hero_badge_link', 'hero_cta_primary', 'hero_cta_secondary', 'hero_features'],
+    keys: ['hero_headline', 'hero_subheadline', 'hero_description', 'hero_badge_text', 'hero_badge_link', 'hero_cta_primary', 'hero_cta_secondary', 'hero_features', 'hero_show_waitlist_count'],
   },
   {
     title: 'סילבוס — מסלול הלימוד',

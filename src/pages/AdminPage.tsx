@@ -115,6 +115,19 @@ const navItems: NavItem[] = [
   },
 ]
 
+// ── New feature tags — auto-expire after 14 days ────────────────────────────
+const NEW_FEATURES: Record<string, string> = {
+  'contact-messages': '2026-03-14',   // Lead tracking & alerts
+  'content-templates': '2026-03-12',  // Content templates library
+}
+
+function isNewFeature(id: string): boolean {
+  const addedDate = NEW_FEATURES[id]
+  if (!addedDate) return false
+  const daysSince = Math.floor((Date.now() - new Date(addedDate).getTime()) / (1000 * 60 * 60 * 24))
+  return daysSince <= 14
+}
+
 // Flat lookup helpers — built from current navItems (default)
 function buildNavLookups(items: NavItem[]) {
   const childToParent = new Map<string, string>()
@@ -765,6 +778,11 @@ function AdminPageInner() {
                         }`}
                       >
                         {child.label}
+                        {isNewFeature(child.id) && (
+                          <span className="mr-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 leading-none">
+                            חדש
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>

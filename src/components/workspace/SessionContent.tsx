@@ -116,25 +116,25 @@ function PromptBlock({ title, content, checkbox }: { title: string; content: str
         <h3 className="text-white font-semibold text-sm mb-3">{title}</h3>
 
         {hasBoth ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3" dir="ltr">
-            {/* English — left side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Hebrew — right side (first in RTL) */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-blue-400 font-medium">English</span>
-                <CopyButton text={en} />
-              </div>
-              <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="ltr">
-                {en}
-              </pre>
-            </div>
-            {/* Hebrew — right side */}
-            <div>
-              <div className="flex items-center justify-between mb-2" dir="rtl">
                 <span className="text-xs text-purple-400 font-medium">עברית</span>
                 <CopyButton text={he} />
               </div>
               <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="rtl">
                 {he}
+              </pre>
+            </div>
+            {/* English — left side (second in RTL) */}
+            <div>
+              <div className="flex items-center justify-between mb-2" dir="ltr">
+                <span className="text-xs text-blue-400 font-medium">English</span>
+                <CopyButton text={en} />
+              </div>
+              <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="ltr">
+                {en}
               </pre>
             </div>
           </div>

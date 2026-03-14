@@ -663,7 +663,8 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
               {templates.length > 0 && (
                 <div className="relative">
                   <button onClick={() => setShowTemplates(!showTemplates)}
-                    className="flex items-center gap-1 text-xs bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 px-2.5 py-1.5 rounded-lg transition-colors">
+                    className="flex items-center gap-1 text-xs bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 px-2.5 py-1.5 rounded-lg transition-colors"
+                    title="הוסף בלוק מתבנית מוכנה">
                     <PackagePlus size={12} />
                     מתבנית
                   </button>
@@ -715,8 +716,8 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
                       {contentTypeLabels[item.content_type]}
                     </span>
                     <span className="text-sm text-gray-300 flex-1 truncate">{item.title || '(ללא כותרת)'}</span>
-                    {isRevealed && <Eye size={11} className="text-green-500 flex-shrink-0" />}
-                    {item.is_locked && <Lock size={11} className="text-gray-600 flex-shrink-0" />}
+                    {isRevealed && <Eye size={11} className="text-green-500 flex-shrink-0" title="נחשף לתלמידים" />}
+                    {item.is_locked && <Lock size={11} className="text-gray-600 flex-shrink-0" title="נעול — לא מוצג לתלמידים" />}
 
                     <div className="flex items-center gap-0.5 flex-shrink-0">
                       <button onClick={() => handleMoveContent(item, 'up')} disabled={idx === 0}
@@ -734,15 +735,15 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
                         item.is_locked
                           ? 'text-yellow-400 hover:text-yellow-300 bg-yellow-400/10'
                           : 'text-gray-500 hover:text-gray-300 bg-white/5'
-                      }`} aria-label={item.is_locked ? 'פתח בלוק' : 'נעל בלוק'}>
+                      }`} aria-label={item.is_locked ? 'פתח בלוק' : 'נעל בלוק'} title={item.is_locked ? 'פתח בלוק — יוצג לתלמידים' : 'נעל בלוק — יוסתר מתלמידים'}>
                       {item.is_locked ? <Eye size={12} /> : <EyeOff size={12} />}
                     </button>
                     <button onClick={() => handleDuplicate(item)}
-                      className="text-gray-500 hover:text-blue-400 transition-colors px-1" aria-label="שכפל בלוק">
+                      className="text-gray-500 hover:text-blue-400 transition-colors px-1" aria-label="שכפל בלוק" title="שכפל בלוק">
                       <Copy size={12} />
                     </button>
                     <button onClick={() => setMoveBlock(item)}
-                      className="text-gray-500 hover:text-purple-400 transition-colors px-1" aria-label="העבר/העתק למפגש אחר">
+                      className="text-gray-500 hover:text-purple-400 transition-colors px-1" aria-label="העבר/העתק למפגש אחר" title="העבר/העתק למפגש אחר">
                       <ArrowRightLeft size={12} />
                     </button>
                     <button onClick={() => setEditingItem({ ...item })}
@@ -751,6 +752,7 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
                     </button>
                     <button onClick={() => handleDeleteContent(item.id)}
                       aria-label="מחק בלוק"
+                      title="מחק בלוק"
                       className="text-gray-600 hover:text-red-400 transition-colors p-1">
                       <Trash2 size={12} />
                     </button>
@@ -901,12 +903,14 @@ export function SessionsManager({ course }: { course: Course }) {
                     <button onClick={() => setExpandedId(isExpanded ? null : session.id)}
                       className="p-2 text-gray-500 hover:text-gray-300 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
                       aria-label={isExpanded ? 'סגור מפגש' : 'ערוך מפגש'}
-                      aria-expanded={isExpanded}>
+                      aria-expanded={isExpanded}
+                      title={isExpanded ? 'סגור עריכה' : 'פתח לעריכה'}>
                       {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </button>
                     <button onClick={() => handleDelete(session.id)}
                       className="text-gray-600 hover:text-red-400 transition-colors p-2"
-                      aria-label="מחק מפגש">
+                      aria-label="מחק מפגש"
+                      title="מחק מפגש">
                       <Trash2 size={14} />
                     </button>
                   </div>

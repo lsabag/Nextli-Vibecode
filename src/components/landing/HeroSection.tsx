@@ -45,7 +45,7 @@ export function HeroSection({ settings, user, profile }: Props) {
   const badgeLink = settings.hero_badge_link || ''
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden" dir="rtl" aria-labelledby="hero-heading">
+    <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden" dir="rtl" aria-labelledby="hero-heading">
 
       {/* ── Background atmosphere ── */}
       <div className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
@@ -68,7 +68,7 @@ export function HeroSection({ settings, user, profile }: Props) {
       </div>
 
       {/* ── Content ── */}
-      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-36 pb-24 text-center">
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-24 pb-24 text-center">
 
         {/* Live badge */}
         <motion.div

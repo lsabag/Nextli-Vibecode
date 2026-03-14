@@ -15,6 +15,7 @@ export type WaitlistEntry     = Database['public']['Tables']['waitlist']['Row']
 export type ContentProgress   = Database['public']['Tables']['content_progress']['Row']
 export type Notification      = Database['public']['Tables']['notifications']['Row']
 export type PrepChecklistItem = Database['public']['Tables']['prep_checklist']['Row']
+export type ContentTemplate  = Database['public']['Tables']['content_templates']['Row']
 export type SessionFeedback  = Database['public']['Tables']['session_feedback']['Row']
 
 export type { UserRole, PaymentStatus, FieldType, SessionStatus, ContentType, CourseStatus }

@@ -1,5 +1,5 @@
 import { supabase } from '../client'
-import type { UserProfile, WizardStep, WizardAnswer, Course, CourseSession, SessionContent, PromptLibraryItem, AdditionalCourse, TeamMember } from '@/types'
+import type { UserProfile, WizardStep, WizardAnswer, Course, CourseSession, SessionContent, PromptLibraryItem, AdditionalCourse, TeamMember, ContentTemplate } from '@/types'
 
 export async function getAdminUsers(): Promise<UserProfile[]> {
   const { data, error } = await supabase
@@ -324,6 +324,34 @@ export async function getAdminSessionFeedback(): Promise<{
     .order('updated_at', { ascending: false })
   if (error) throw error
   return data ?? []
+}
+
+// ── Content Templates ─────────────────────────────────────────────────────────
+
+export async function getAdminContentTemplates(): Promise<ContentTemplate[]> {
+  const { data, error } = await supabase
+    .from('content_templates')
+    .select('*')
+    .order('display_order', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+export async function upsertContentTemplate(
+  template: Omit<ContentTemplate, 'created_at'>
+): Promise<void> {
+  const { error } = await supabase
+    .from('content_templates')
+    .upsert(template)
+  if (error) throw error
+}
+
+export async function deleteContentTemplate(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('content_templates')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
 }
 
 // ── Wizard Answers (for CSV export) ──────────────────────────────────────────

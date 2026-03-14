@@ -27,6 +27,7 @@ const ALLOWED_TABLES = new Set([
   'session_feedback',
   'contact_messages',
   'intake_questions',
+  'content_templates',
 ]);
 
 // Validate column/table names to prevent injection (only allow alphanumeric + underscore)

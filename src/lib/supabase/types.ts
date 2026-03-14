@@ -482,6 +482,43 @@ export type Database = {
         }
         Relationships: []
       }
+      content_templates: {
+        Row: {
+          id: string
+          content_type: ContentType
+          title: string
+          content: string
+          language: string | null
+          is_locked: boolean
+          file_url: string | null
+          display_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          content_type: ContentType
+          title: string
+          content: string
+          language?: string | null
+          is_locked?: boolean
+          file_url?: string | null
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          content_type?: ContentType
+          title?: string
+          content?: string
+          language?: string | null
+          is_locked?: boolean
+          file_url?: string | null
+          display_order?: number
+          is_active?: boolean
+        }
+        Relationships: []
+      }
       session_feedback: {
         Row: {
           id: string

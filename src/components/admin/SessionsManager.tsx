@@ -16,11 +16,15 @@ import {
   Lock, Unlock, ChevronDown, ChevronUp, Plus, Trash2, Save,
   FileText, Code, Video, Copy, File, Eye, EyeOff,
   Zap, ArrowDown, ArrowUp, MessageSquare, ClipboardList, ExternalLink,
+  ArrowRightLeft, PackagePlus,
 } from 'lucide-react'
 import { RichTextEditor } from './RichTextEditor'
 import { PromptsManager } from './PromptsManager'
 import { ContentPreviewModal } from './ContentPreviewModal'
+import { ContentMoveDialog } from './ContentMoveDialog'
 import { getAdminPrepChecklist } from '@/lib/supabase/queries/prep'
+import { getAdminContentTemplates } from '@/lib/supabase/queries/admin'
+import type { ContentTemplate } from '@/types'
 import DateTimePicker from '@/components/ui/DateTimePicker'
 import { useAdminDirty } from '@/hooks/useAdminDirty'
 
@@ -401,11 +405,17 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
   const [editingItem, setEditingItem] = useState<EditingContent | null>(null)
   const [savingContent, setSavingContent] = useState(false)
   const [activeTab, setActiveTab] = useState<'content' | 'prompts'>('content')
+  const [moveBlock, setMoveBlock] = useState<SessionContent | null>(null)
+  const [templates, setTemplates] = useState<ContentTemplate[]>([])
+  const [showTemplates, setShowTemplates] = useState(false)
 
   useEffect(() => {
     getAdminSessionContent(session.id)
       .then(data => { setContentItems(data); setLoadingContent(false) })
       .catch(() => setLoadingContent(false))
+    getAdminContentTemplates()
+      .then(data => setTemplates(data.filter(t => t.is_active)))
+      .catch(() => {})
   }, [session.id])
 
   async function handleSaveInfo() {
@@ -434,6 +444,26 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
       ? Math.max(...contentItems.map(c => c.display_order)) + 1
       : 0
     setEditingItem(newContent(session.id, order))
+  }
+
+  async function handleAddFromTemplate(tpl: ContentTemplate) {
+    const order = contentItems.length > 0
+      ? Math.max(...contentItems.map(c => c.display_order)) + 1
+      : 0
+    const block: Omit<SessionContent, 'created_at'> = {
+      id: crypto.randomUUID(),
+      session_id: session.id,
+      content_type: tpl.content_type,
+      title: tpl.title,
+      content: tpl.content,
+      language: tpl.language,
+      display_order: order,
+      is_locked: tpl.is_locked,
+      file_url: tpl.file_url,
+    }
+    await upsertSessionContent(block)
+    setContentItems(prev => [...prev, { ...block, created_at: new Date().toISOString() } as SessionContent].sort((a, b) => a.display_order - b.display_order))
+    setShowTemplates(false)
   }
 
   function handleDuplicate(item: SessionContent) {
@@ -604,11 +634,36 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
         <div>
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">בלוקי תוכן</p>
-            <button onClick={handleAddContent}
-              className="flex items-center gap-1 text-xs bg-white/10 hover:bg-white/15 text-gray-300 px-2.5 py-1.5 rounded-lg transition-colors">
-              <Plus size={12} />
-              הוסף בלוק
-            </button>
+            <div className="flex items-center gap-1.5 relative">
+              {templates.length > 0 && (
+                <div className="relative">
+                  <button onClick={() => setShowTemplates(!showTemplates)}
+                    className="flex items-center gap-1 text-xs bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 px-2.5 py-1.5 rounded-lg transition-colors">
+                    <PackagePlus size={12} />
+                    מתבנית
+                  </button>
+                  {showTemplates && (
+                    <div className="absolute top-full left-0 mt-1 z-30 bg-[#1a1a2e] border border-white/10 rounded-lg shadow-xl min-w-[220px] py-1">
+                      <p className="text-[10px] text-gray-500 px-3 py-1 font-semibold">בחר תבנית להוספה:</p>
+                      {templates.map(tpl => (
+                        <button key={tpl.id} onClick={() => handleAddFromTemplate(tpl)}
+                          className="w-full text-right px-3 py-2 text-xs text-gray-300 hover:bg-white/5 transition-colors flex items-center gap-2">
+                          <span className="text-[10px] text-gray-600 bg-white/5 px-1.5 py-0.5 rounded shrink-0">
+                            {contentTypeLabels[tpl.content_type]}
+                          </span>
+                          <span className="truncate">{tpl.title}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <button onClick={handleAddContent}
+                className="flex items-center gap-1 text-xs bg-white/10 hover:bg-white/15 text-gray-300 px-2.5 py-1.5 rounded-lg transition-colors">
+                <Plus size={12} />
+                הוסף בלוק
+              </button>
+            </div>
           </div>
 
           {loadingContent ? (
@@ -661,6 +716,10 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
                       className="text-gray-500 hover:text-blue-400 transition-colors px-1" aria-label="שכפל בלוק">
                       <Copy size={12} />
                     </button>
+                    <button onClick={() => setMoveBlock(item)}
+                      className="text-gray-500 hover:text-purple-400 transition-colors px-1" aria-label="העבר/העתק למפגש אחר">
+                      <ArrowRightLeft size={12} />
+                    </button>
                     <button onClick={() => setEditingItem({ ...item })}
                       className="text-xs text-gray-500 hover:text-blue-400 transition-colors px-2 py-1">
                       ערוך
@@ -690,6 +749,21 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
             />
           )}
         </div>
+      )}
+
+      {moveBlock && (
+        <ContentMoveDialog
+          block={moveBlock}
+          currentSessionId={session.id}
+          onClose={() => setMoveBlock(null)}
+          onMoved={() => {
+            setMoveBlock(null)
+            // Reload content
+            getAdminSessionContent(session.id)
+              .then(data => setContentItems(data))
+              .catch(() => {})
+          }}
+        />
       )}
     </div>
   )

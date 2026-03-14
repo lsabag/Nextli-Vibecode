@@ -6,7 +6,7 @@ import { SEOHead } from '@/components/shared/SEOHead'
 import { AdminDirtyProvider, UnsavedChangesDialog, useAdminDirty } from '@/hooks/useAdminDirty'
 import {
   LayoutDashboard, Users, GraduationCap, Home, Settings, Menu,
-  ChevronDown, ClipboardCheck, Search, X, Monitor, Share2, ListOrdered,
+  ChevronDown, ClipboardCheck, Search, X, Monitor, Share2, ListOrdered, PackagePlus,
 } from 'lucide-react'
 import { getSettingsSearchIndex } from '@/components/admin/SettingsManager'
 import { updateSystemSetting } from '@/lib/supabase/queries/admin'
@@ -30,6 +30,7 @@ const ImageAltAudit = lazy(() => import('@/components/admin/ImageAltAudit').then
 const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 const ShareSettingsManager = lazy(() => import('@/components/admin/ShareSettingsManager').then(m => ({ default: m.ShareSettingsManager })))
 const NavOrderManager = lazy(() => import('@/components/admin/NavOrderManager').then(m => ({ default: m.NavOrderManager })))
+const ContentTemplatesManager = lazy(() => import('@/components/admin/ContentTemplatesManager').then(m => ({ default: m.ContentTemplatesManager })))
 
 // ── Navigation structure ─────────────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ const navItems: NavItem[] = [
     icon: <GraduationCap size={18} />,
     children: [
       { id: 'manage', label: 'ניהול קורסים' },
+      { id: 'content-templates', label: 'ספריית תבניות' },
       { id: 'prep', label: 'הכנה לקורס' },
     ],
   },
@@ -417,8 +419,9 @@ function renderContent(activeId: string, onNavigate: (tab: string) => void) {
     case 'insights':          return <StudentInsights />
     case 'wizard':            return <WizardManager />
     case 'notes':             return <NotesViewer />
-    case 'manage':            return <CoursesManager />
-    case 'prep':              return <PrepTabWrapper />
+    case 'manage':              return <CoursesManager />
+    case 'content-templates':   return <ContentTemplatesManager />
+    case 'prep':                return <PrepTabWrapper />
     case 'student-overview':          return <StudentAreaOverview onNavigate={onNavigate} />
     case 'student-workspace':         return <StudentAreaSettings />
     case 'student-wizard':            return <WizardManager />

@@ -236,6 +236,22 @@ CREATE TABLE IF NOT EXISTS session_feedback (
   FOREIGN KEY (session_id) REFERENCES course_sessions(id) ON DELETE CASCADE
 );
 
+-- ─── content_templates ────────────────────────────────────────────────────
+-- Reusable content blocks that can be added to any session (shared library)
+
+CREATE TABLE IF NOT EXISTS content_templates (
+  id TEXT PRIMARY KEY,
+  content_type TEXT NOT NULL CHECK(content_type IN ('video', 'code', 'text', 'rich_text', 'file', 'prompt', 'feedback', 'prep')),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  language TEXT,
+  is_locked INTEGER NOT NULL DEFAULT 0,
+  file_url TEXT,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  is_active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ─── Indexes ────────────────────────────────────────────────────────────────
 
 CREATE INDEX IF NOT EXISTS idx_wizard_answers_user ON wizard_answers(user_id);

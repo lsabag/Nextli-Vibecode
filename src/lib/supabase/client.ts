@@ -51,6 +51,10 @@ const seedData: Record<string, unknown[]> = {
     { id: 'content-011', session_id: 'session-002', content_type: 'prompt', title: 'פרומפט לבניית DB', content: 'Create a Supabase database schema for a task management app with: users, projects, tasks (with status, priority, due_date), and comments. Include RLS policies.', language: null, display_order: 1, is_locked: false, file_url: null, created_at: '2026-01-02T00:00:00Z' },
     { id: 'content-012', session_id: 'session-002', content_type: 'rich_text', title: 'סיכום', content: '<p>כל הכבוד! סיימתם את המפגש השני.</p>', language: null, display_order: 2, is_locked: false, file_url: null, created_at: '2026-01-02T00:00:00Z' },
   ],
+  content_templates: [
+    { id: 'tpl-001', content_type: 'rich_text', title: 'הקדמה כללית לקורס', content: '<p>ברוכים הבאים! במפגש זה נלמד את הבסיס.</p>', language: null, is_locked: false, file_url: null, display_order: 0, is_active: true, created_at: '2026-01-01T00:00:00Z' },
+    { id: 'tpl-002', content_type: 'feedback', title: 'פידבק מפגש', content: '{"q1":"","q2":"","showRating":true}', language: null, is_locked: false, file_url: null, display_order: 1, is_active: true, created_at: '2026-01-01T00:00:00Z' },
+  ],
   system_settings: [
     // Hero
     { key: 'hero_headline', value: 'מרעיון למוצר' },

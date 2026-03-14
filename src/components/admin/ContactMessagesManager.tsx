@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Mail, Search, Filter, Archive, CheckCircle2, Clock, AlertCircle,
   ChevronDown, ChevronUp, MessageSquare, User, StickyNote, Trash2,
-  ExternalLink, X,
+  ExternalLink, X, AlertTriangle,
 } from 'lucide-react'
 import type { ContactMessage, WaitlistEntry, UserProfile } from '@/types'
 import { getAdminContactMessages, updateContactMessage, deleteContactMessage } from '@/lib/supabase/queries/admin'
@@ -39,10 +39,18 @@ function formatDate(dateStr: string): string {
   } catch { return dateStr }
 }
 
+const STALE_DAYS = 3 // messages in "new" status for more than this are stale
+
+function daysOld(dateStr: string): number {
+  try {
+    return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24))
+  } catch { return 0 }
+}
+
 export function ContactMessagesManager() {
   const [messages, setMessages] = useState<ContactMessage[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<StatusFilter>('all')
+  const [filter, setFilter] = useState<StatusFilter>('new')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [editingNotes, setEditingNotes] = useState<string | null>(null)
@@ -143,7 +151,11 @@ export function ContactMessagesManager() {
   }
 
   const filtered = messages.filter(m => {
-    if (filter !== 'all' && m.status !== filter) return false
+    if (filter === 'all') {
+      if (m.status === 'archived') return false // "הכל" excludes archived
+    } else if (m.status !== filter) {
+      return false
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase()
       return m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.message.toLowerCase().includes(q)
@@ -152,12 +164,14 @@ export function ContactMessagesManager() {
   })
 
   const counts = {
-    all: messages.length,
+    all: messages.filter(m => m.status !== 'archived').length,
     new: messages.filter(m => m.status === 'new').length,
     in_progress: messages.filter(m => m.status === 'in_progress').length,
     resolved: messages.filter(m => m.status === 'resolved').length,
     archived: messages.filter(m => m.status === 'archived').length,
   }
+
+  const staleCount = messages.filter(m => m.status === 'new' && daysOld(m.created_at) >= STALE_DAYS).length
 
   if (loading) {
     return (
@@ -213,6 +227,17 @@ export function ContactMessagesManager() {
           ))}
         </div>
       </div>
+
+      {/* Stale alert */}
+      {staleCount > 0 && (
+        <div className="flex items-center gap-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+          <AlertTriangle size={16} className="text-amber-400 shrink-0" />
+          <p className="text-xs text-amber-300">
+            <span className="font-bold">{staleCount} {staleCount === 1 ? 'פנייה ממתינה' : 'פניות ממתינות'}</span>
+            {' '}יותר מ-{STALE_DAYS} ימים ללא טיפול
+          </p>
+        </div>
+      )}
 
       {/* Messages list */}
       {filtered.length === 0 ? (
@@ -270,6 +295,12 @@ export function ContactMessagesManager() {
                   </div>
 
                   <div className="text-left shrink-0 flex items-center gap-2">
+                    {msg.status === 'new' && daysOld(msg.created_at) >= STALE_DAYS && (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">
+                        <AlertTriangle size={10} />
+                        {daysOld(msg.created_at)} ימים
+                      </span>
+                    )}
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${cfg.bg} ${cfg.color}`}>
                       {cfg.label}
                     </span>

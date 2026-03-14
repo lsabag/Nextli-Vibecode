@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
 import {
   Users, GraduationCap, BookOpen, UserPlus, Star,
-  MessageSquare, Calendar, Mail, AlertCircle, CheckCircle2,
+  MessageSquare, Calendar, Mail, AlertCircle, CheckCircle2, AlertTriangle,
 } from 'lucide-react'
 
 type Stats = {
@@ -19,6 +19,7 @@ type Stats = {
   avgRating: number | null
   totalContactMessages: number
   unreadContactMessages: number
+  staleContactMessages: number
   courseDetails: {
     id: string
     title: string
@@ -111,6 +112,8 @@ export function AdminDashboard() {
 
   useEffect(() => {
     loadStats()
+    // Trigger stale alerts check (sends Telegram max once/day, no-op in dev)
+    fetch('/api/cron/stale-alerts').catch(() => {})
   }, [])
 
   async function loadStats() {
@@ -240,6 +243,12 @@ export function AdminDashboard() {
         avgRating,
         totalContactMessages: contactList.length,
         unreadContactMessages: contactList.filter(m => !(m.is_read as boolean)).length,
+        staleContactMessages: contactList.filter(m => {
+          const status = (m.status as string) || 'new'
+          if (status !== 'new') return false
+          const age = (Date.now() - new Date(m.created_at as string).getTime()) / (1000 * 60 * 60 * 24)
+          return age >= 3
+        }).length,
         courseDetails,
         upcomingSessions,
         recentWaitlist,
@@ -287,6 +296,22 @@ export function AdminDashboard() {
           <p className="text-sm text-gray-500">סקירה כללית של המערכת</p>
         </div>
       </div>
+
+      {/* Stale messages alert */}
+      {stats.staleContactMessages > 0 && (
+        <button
+          onClick={() => setSearchParams({ tab: 'students', sub: 'contact-messages' })}
+          className="w-full flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 mb-6 hover:bg-amber-500/15 transition-colors text-right"
+        >
+          <AlertTriangle size={18} className="text-amber-400 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm text-amber-300 font-bold">
+              {stats.staleContactMessages} {stats.staleContactMessages === 1 ? 'פנייה ממתינה' : 'פניות ממתינות'} יותר מ-3 ימים
+            </p>
+            <p className="text-[11px] text-amber-400/60">לחץ כדי לצפות ולטפל</p>
+          </div>
+        </button>
+      )}
 
       {/* Main stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

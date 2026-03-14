@@ -42,6 +42,11 @@ export default function SyllabusPage() {
     ? (() => { try { return JSON.parse(settings.syllabus_badges) } catch { return defaultBadges } })()
     : defaultBadges
 
+  type SyllabusExtra = { icon: string; title: string; desc: string }
+  const extras: SyllabusExtra[] = settings.syllabus_extras
+    ? (() => { try { return JSON.parse(settings.syllabus_extras) } catch { return [] } })()
+    : []
+
   return (
     <div className="min-h-screen bg-[#0a0a0f]" id="main-content">
       {/* Header */}
@@ -77,6 +82,18 @@ export default function SyllabusPage() {
             {settings.syllabus_subheading || 'שלושה מפגשים אינטנסיביים — מאפס לפרודקשן'}
           </p>
         </motion.div>
+
+        {/* Intro text */}
+        {settings.syllabus_intro && settings.syllabus_public_enabled === 'true' && (
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-gray-400 text-lg leading-relaxed mb-12 max-w-3xl"
+          >
+            {settings.syllabus_intro}
+          </motion.p>
+        )}
 
         {/* Sessions */}
         {!loading && settings.syllabus_public_enabled !== 'true' ? (
@@ -132,8 +149,31 @@ export default function SyllabusPage() {
           </div>
         )}
 
+        {/* Manual extras */}
+        {extras.length > 0 && settings.syllabus_public_enabled === 'true' && (
+          <div className="space-y-6 mt-10">
+            {extras.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: (sessions.length + i) * 0.1 }}
+                className="bg-white/5 border border-white/10 rounded-2xl p-8 hover:bg-white/[0.07] transition-colors"
+              >
+                <div className="flex items-start gap-5">
+                  <div className="text-4xl shrink-0 mt-1" aria-hidden="true">{item.icon}</div>
+                  <div className="flex-1">
+                    <h2 className="text-white font-bold text-xl mb-3">{item.title}</h2>
+                    <p className="text-gray-400 leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
         {/* CTA */}
-        {sessions.length > 0 && (
+        {(sessions.length > 0 || extras.length > 0) && settings.syllabus_public_enabled === 'true' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -148,9 +188,9 @@ export default function SyllabusPage() {
                 boxShadow: '0 0 40px rgba(37,99,235,0.35)',
               }}
             >
-              הצטרף עכשיו
+              {settings.syllabus_cta_text || 'הצטרף עכשיו'}
             </Link>
-            <p className="text-gray-500 text-sm mt-3">אין צורך בניסיון קודם בקוד</p>
+            <p className="text-gray-500 text-sm mt-3">{settings.syllabus_footer_text || 'אין צורך בניסיון קודם בקוד'}</p>
           </motion.div>
         )}
       </main>

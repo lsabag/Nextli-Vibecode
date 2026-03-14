@@ -36,7 +36,11 @@ const settingLabels: Record<string, string> = {
   syllabus_public_enabled: 'הפעל סילבוס ציבורי (true/false)',
   syllabus_heading:    'כותרת',
   syllabus_subheading: 'תת-כותרת',
+  syllabus_intro:      'טקסט מבוא (מתחת לכותרת בדף /syllabus)',
   syllabus_badges:     'אייקונים ותגיות מפגשים',
+  syllabus_extras:     'פריטים ידניים נוספים (מופיעים אחרי המפגשים)',
+  syllabus_cta_text:   'טקסט כפתור CTA (ברירת מחדל: הצטרף עכשיו)',
+  syllabus_footer_text: 'טקסט מתחת ל-CTA (ברירת מחדל: אין צורך בניסיון קודם)',
 
   // Projects
   projects_heading:    'כותרת',
@@ -109,7 +113,7 @@ const LANDING_SECTIONS: Section[] = [
   {
     title: 'סילבוס — מסלול הלימוד',
     icon: '📚',
-    keys: ['syllabus_public_enabled', 'syllabus_heading', 'syllabus_subheading', 'syllabus_badges'],
+    keys: ['syllabus_public_enabled', 'syllabus_heading', 'syllabus_subheading', 'syllabus_intro', 'syllabus_badges', 'syllabus_extras', 'syllabus_cta_text', 'syllabus_footer_text'],
   },
   {
     title: 'פרויקטים',
@@ -183,8 +187,8 @@ const GENERAL_SECTIONS: Section[] = [
 const ALL_SECTIONS = [...LANDING_SECTIONS, ...STUDENT_SECTIONS, ...GENERAL_SECTIONS]
 
 const TOGGLE_KEYS = new Set(['ai_mentor_active', 'syllabus_public_enabled'])
-const VISUAL_JSON_KEYS = new Set(['hero_features', 'syllabus_badges', 'navbar_links'])
-const TEXTAREA_KEYS = new Set(['hero_description', 'contact_description'])
+const VISUAL_JSON_KEYS = new Set(['hero_features', 'syllabus_badges', 'syllabus_extras', 'navbar_links'])
+const TEXTAREA_KEYS = new Set(['hero_description', 'contact_description', 'syllabus_intro'])
 const EMOJI_PICKER_KEYS = new Set(['navbar_popup_icon'])
 const EMOJI_OPTIONS = ['✨', '🚀', '🎯', '💡', '⭐', '🔥', '💬', '👋', '📚', '🎓', '🛠️', '⚡', '💻', '🎨', '📱', '']
 
@@ -344,6 +348,78 @@ function SyllabusBadgesEditor({ value, onChange }: { value: string; onChange: (v
       ))}
       <button onClick={add} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors py-1">
         <Plus size={14} /> הוסף מפגש
+      </button>
+    </div>
+  )
+}
+
+type SyllabusExtra = { icon: string; title: string; desc: string }
+
+function SyllabusExtrasEditor({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const items = parseJSON<SyllabusExtra[]>(value, [])
+
+  function update(index: number, patch: Partial<SyllabusExtra>) {
+    const next = items.map((c, i) => i === index ? { ...c, ...patch } : c)
+    onChange(JSON.stringify(next))
+  }
+
+  function add() {
+    onChange(JSON.stringify([...items, { icon: '📌', title: '', desc: '' }]))
+  }
+
+  function remove(index: number) {
+    onChange(JSON.stringify(items.filter((_, i) => i !== index)))
+  }
+
+  function move(index: number, dir: -1 | 1) {
+    const next = [...items]
+    const target = index + dir
+    if (target < 0 || target >= next.length) return
+    ;[next[index], next[target]] = [next[target], next[index]]
+    onChange(JSON.stringify(next))
+  }
+
+  return (
+    <div className="space-y-3">
+      {items.map((item, i) => (
+        <div key={i} className="flex items-start gap-2 bg-white/3 border border-white/5 rounded-lg p-3">
+          <div className="flex flex-col gap-1 shrink-0">
+            <button onClick={() => move(i, -1)} disabled={i === 0} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors" title="הזז למעלה">
+              <ChevronUp size={14} />
+            </button>
+            <GripVertical size={14} className="text-gray-700 mx-auto" />
+            <button onClick={() => move(i, 1)} disabled={i === items.length - 1} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors" title="הזז למטה">
+              <ChevronDown size={14} />
+            </button>
+          </div>
+          <div className="flex-1 space-y-2">
+            <div className="flex gap-2">
+              <EmojiSelect value={item.icon} onChange={v => update(i, { icon: v })} />
+              <input
+                type="text"
+                value={item.title}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder="כותרת (לדוגמה: בונוס — קהילת בוגרים)"
+                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white outline-none focus:border-blue-500 transition-colors"
+                dir="auto"
+              />
+            </div>
+            <textarea
+              value={item.desc}
+              onChange={e => update(i, { desc: e.target.value })}
+              placeholder="תיאור"
+              rows={2}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-blue-500 transition-colors resize-y"
+              dir="auto"
+            />
+          </div>
+          <button onClick={() => remove(i)} className="text-gray-600 hover:text-red-400 transition-colors shrink-0 mt-1" title="מחק">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      ))}
+      <button onClick={add} className="flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors py-1">
+        <Plus size={14} /> הוסף פריט
       </button>
     </div>
   )
@@ -567,6 +643,9 @@ function SettingsRenderer({ sections, title, defaultCollapsed = false }: Setting
     }
     if (row.key === 'navbar_links') {
       return <NavLinksEditor value={row.value} onChange={v => handleChange(row.key, v)} />
+    }
+    if (row.key === 'syllabus_extras') {
+      return <SyllabusExtrasEditor value={row.value} onChange={v => handleChange(row.key, v)} />
     }
 
     if (TEXTAREA_KEYS.has(row.key)) {

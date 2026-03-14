@@ -5,6 +5,13 @@ import { WizardStepField } from '@/components/wizard/WizardStepField'
 import type { WizardStep, WizardAnswer, FieldType } from '@/types'
 import { Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react'
 
+function parseOpts(options: unknown): string[] {
+  if (!options) return []
+  if (Array.isArray(options)) return options
+  if (typeof options === 'string') { try { return JSON.parse(options) } catch { return [] } }
+  return []
+}
+
 function newStep(order: number): Omit<WizardStep, 'created_at'> {
   return {
     id: crypto.randomUUID(),
@@ -149,7 +156,7 @@ function WizardDistribution({ steps, answers }: { steps: WizardStep[]; answers: 
             <div key={step.id} className="bg-white/5 border border-white/10 rounded-xl p-4">
               <p className="text-sm font-semibold text-white mb-3">{step.question_text}</p>
               <div className="space-y-2">
-                {(step.options as string[]).map(opt => {
+                {parseOpts(step.options).map(opt => {
                   const count = counts.get(opt) ?? 0
                   const pct = stepAnswers.length > 0 ? Math.round((count / stepAnswers.length) * 100) : 0
                   return (
@@ -408,7 +415,7 @@ export function WizardManager() {
 
                   {step.field_type === 'select' && (
                     <textarea
-                      value={(step.options as string[] | null)?.join('\n') ?? ''}
+                      value={parseOpts(step.options).join('\n')}
                       onChange={e => {
                         const opts = e.target.value.split('\n').filter(Boolean)
                         updateStep(step.id, { options: opts })

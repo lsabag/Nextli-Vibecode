@@ -1,9 +1,9 @@
 /**
- * Stale contact messages alert — checks for messages in "new" status
- * older than 3 days and sends a Telegram notification.
+ * Stale contact messages alert — checks for messages matching configured
+ * statuses older than N days and sends a Telegram notification.
  *
- * Call this endpoint periodically (e.g., daily via cron-job.org or CF Worker cron).
- * It stores the last alert timestamp in system_settings to avoid duplicate alerts.
+ * Settings are read from system_settings (alert_stale_days, alert_statuses,
+ * alert_telegram_enabled). Defaults: 3 days, status "new", enabled.
  *
  * GET /api/cron/stale-alerts?key=SECRET
  */
@@ -15,10 +15,13 @@ interface Env {
   CRON_SECRET?: string
 }
 
-const STALE_DAYS = 3
+const DEFAULTS = {
+  alert_stale_days: '3',
+  alert_statuses: 'new',
+  alert_telegram_enabled: 'true',
+}
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  // Simple auth — require a secret key to prevent abuse
   const url = new URL(context.request.url)
   const key = url.searchParams.get('key')
   if (context.env.CRON_SECRET && key !== context.env.CRON_SECRET) {
@@ -34,8 +37,29 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
+    // Read alert settings from DB
+    const settingsKeys = Object.keys(DEFAULTS)
+    const placeholders = settingsKeys.map(() => '?').join(',')
+    const { results: settingsRows } = await db
+      .prepare(`SELECT key, value FROM system_settings WHERE key IN (${placeholders})`)
+      .bind(...settingsKeys)
+      .all<{ key: string; value: string }>()
+
+    const settings: Record<string, string> = { ...DEFAULTS }
+    for (const row of settingsRows ?? []) {
+      settings[row.key] = row.value
+    }
+
+    const staleDays = Math.max(1, parseInt(settings.alert_stale_days, 10) || 3)
+    const alertStatuses = settings.alert_statuses.split(',').map(s => s.trim()).filter(Boolean)
+    const telegramEnabled = settings.alert_telegram_enabled === 'true'
+
+    if (!telegramEnabled || alertStatuses.length === 0) {
+      return Response.json({ skipped: true, reason: 'Alerts disabled or no statuses configured' })
+    }
+
     // Check if we already sent an alert today
-    const todayKey = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+    const todayKey = new Date().toISOString().slice(0, 10)
     const lastAlert = await db
       .prepare("SELECT value FROM system_settings WHERE key = 'stale_alert_last_date'")
       .first<{ value: string }>()
@@ -44,12 +68,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       return Response.json({ skipped: true, reason: 'Already sent today' })
     }
 
-    // Find stale messages (status = 'new' and older than STALE_DAYS)
-    const cutoff = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000).toISOString()
+    // Find stale messages matching configured statuses
+    const cutoff = new Date(Date.now() - staleDays * 24 * 60 * 60 * 1000).toISOString()
+    const statusPlaceholders = alertStatuses.map(() => '?').join(',')
     const { results } = await db
-      .prepare("SELECT name, email, message, created_at FROM contact_messages WHERE status = 'new' AND created_at < ? ORDER BY created_at ASC")
-      .bind(cutoff)
-      .all<{ name: string; email: string; message: string; created_at: string }>()
+      .prepare(`SELECT name, email, message, created_at, status FROM contact_messages WHERE status IN (${statusPlaceholders}) AND created_at < ? ORDER BY created_at ASC`)
+      .bind(...alertStatuses, cutoff)
+      .all<{ name: string; email: string; message: string; created_at: string; status: string }>()
 
     if (!results || results.length === 0) {
       return Response.json({ stale: 0, sent: false })
@@ -57,7 +82,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     // Build Telegram message
     const lines = [
-      `⚠️ *${results.length} פניות ממתינות יותר מ-${STALE_DAYS} ימים*`,
+      `⚠️ *${results.length} פניות ממתינות יותר מ-${staleDays} ימים*`,
       '',
     ]
 

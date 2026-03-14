@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import {
   Mail, Search, Filter, Archive, CheckCircle2, Clock, AlertCircle,
   ChevronDown, ChevronUp, MessageSquare, User, StickyNote, Trash2,
-  ExternalLink, X, AlertTriangle,
+  ExternalLink, X, AlertTriangle, Settings, Bell, Send,
 } from 'lucide-react'
 import type { ContactMessage, WaitlistEntry, UserProfile } from '@/types'
 import { getAdminContactMessages, updateContactMessage, deleteContactMessage } from '@/lib/supabase/queries/admin'
@@ -39,7 +39,14 @@ function formatDate(dateStr: string): string {
   } catch { return dateStr }
 }
 
-const STALE_DAYS = 3 // messages in "new" status for more than this are stale
+const DEFAULT_STALE_DAYS = 3
+const DEFAULT_ALERT_STATUSES = ['new']
+
+interface AlertSettings {
+  staleDays: number
+  statuses: string[]
+  telegramEnabled: boolean
+}
 
 function daysOld(dateStr: string): number {
   try {
@@ -59,9 +66,17 @@ export function ContactMessagesManager() {
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([])
   const [students, setStudents] = useState<UserProfile[]>([])
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
+  const [alertSettings, setAlertSettings] = useState<AlertSettings>({
+    staleDays: DEFAULT_STALE_DAYS,
+    statuses: DEFAULT_ALERT_STATUSES,
+    telegramEnabled: true,
+  })
+  const [savingSettings, setSavingSettings] = useState(false)
 
   useEffect(() => {
     load()
+    loadAlertSettings()
   }, [])
 
   async function load() {
@@ -88,6 +103,44 @@ export function ContactMessagesManager() {
       // silent
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadAlertSettings() {
+    try {
+      const keys = ['alert_stale_days', 'alert_statuses', 'alert_telegram_enabled']
+      const { data } = await supabase.from('system_settings').select('*')
+      const rows = (data ?? []) as Array<{ key: string; value: string }>
+      const map: Record<string, string> = {}
+      for (const r of rows) {
+        if (keys.includes(r.key)) map[r.key] = r.value
+      }
+      setAlertSettings({
+        staleDays: parseInt(map.alert_stale_days, 10) || DEFAULT_STALE_DAYS,
+        statuses: map.alert_statuses ? map.alert_statuses.split(',').filter(Boolean) : DEFAULT_ALERT_STATUSES,
+        telegramEnabled: map.alert_telegram_enabled !== 'false',
+      })
+    } catch {
+      // use defaults
+    }
+  }
+
+  async function saveAlertSettings(updated: AlertSettings) {
+    setSavingSettings(true)
+    try {
+      const entries = [
+        { key: 'alert_stale_days', value: String(updated.staleDays) },
+        { key: 'alert_statuses', value: updated.statuses.join(',') },
+        { key: 'alert_telegram_enabled', value: String(updated.telegramEnabled) },
+      ]
+      for (const { key, value } of entries) {
+        await supabase.from('system_settings').upsert({ key, value })
+      }
+      setAlertSettings(updated)
+    } catch {
+      // silent
+    } finally {
+      setSavingSettings(false)
     }
   }
 
@@ -171,7 +224,7 @@ export function ContactMessagesManager() {
     archived: messages.filter(m => m.status === 'archived').length,
   }
 
-  const staleCount = messages.filter(m => m.status === 'new' && daysOld(m.created_at) >= STALE_DAYS).length
+  const staleCount = messages.filter(m => alertSettings.statuses.includes(m.status) && daysOld(m.created_at) >= alertSettings.staleDays).length
 
   if (loading) {
     return (
@@ -186,10 +239,107 @@ export function ContactMessagesManager() {
 
   return (
     <div dir="rtl" className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-white mb-1">מעקב פניות ולידים</h2>
-        <p className="text-xs text-gray-500">ניהול פניות, מעקב סטטוס, וצפייה אם הפכו ללקוחות</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white mb-1">מעקב פניות ולידים</h2>
+          <p className="text-xs text-gray-500">ניהול פניות, מעקב סטטוס, וצפייה אם הפכו ללקוחות</p>
+        </div>
+        <button
+          onClick={() => setShowSettings(v => !v)}
+          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+            showSettings
+              ? 'bg-blue-600/20 text-blue-400 border-blue-500/30'
+              : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
+          }`}
+        >
+          <Settings size={13} />
+          הגדרות התראות
+        </button>
       </div>
+
+      {/* Alert settings panel */}
+      {showSettings && (
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Bell size={14} className="text-blue-400" />
+            <span className="text-sm font-medium text-white">הגדרות התראות</span>
+          </div>
+
+          {/* Stale days */}
+          <div className="flex items-center gap-3">
+            <label className="text-xs text-gray-400 whitespace-nowrap">התרע אחרי</label>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              value={alertSettings.staleDays}
+              onChange={e => setAlertSettings(s => ({ ...s, staleDays: Math.max(1, parseInt(e.target.value, 10) || 1) }))}
+              className="w-16 bg-[#0a0a0f] border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white text-center outline-none focus:border-blue-500/50"
+            />
+            <span className="text-xs text-gray-400">ימים</span>
+          </div>
+
+          {/* Statuses to alert on */}
+          <div>
+            <label className="text-xs text-gray-400 block mb-2">סטטוסים שמפעילים התראה:</label>
+            <div className="flex items-center gap-3 flex-wrap">
+              {(['new', 'in_progress'] as const).map(s => {
+                const cfg = STATUS_CONFIG[s]
+                const checked = alertSettings.statuses.includes(s)
+                return (
+                  <label key={s} className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => {
+                        setAlertSettings(prev => ({
+                          ...prev,
+                          statuses: checked
+                            ? prev.statuses.filter(x => x !== s)
+                            : [...prev.statuses, s],
+                        }))
+                      }}
+                      className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30"
+                    />
+                    <span className={`text-xs ${cfg.color}`}>{cfg.label}</span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Telegram toggle */}
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={alertSettings.telegramEnabled}
+                onChange={() => setAlertSettings(s => ({ ...s, telegramEnabled: !s.telegramEnabled }))}
+                className="rounded border-white/20 bg-white/5 text-blue-500 focus:ring-blue-500/30"
+              />
+              <Send size={12} className="text-gray-400" />
+              <span className="text-xs text-gray-300">שלח התראה בטלגרם</span>
+            </label>
+          </div>
+
+          {/* Save */}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => saveAlertSettings(alertSettings)}
+              disabled={savingSettings}
+              className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-4 py-1.5 rounded-lg font-medium"
+            >
+              {savingSettings ? 'שומר...' : 'שמור הגדרות'}
+            </button>
+            <button
+              onClick={() => setShowSettings(false)}
+              className="text-xs text-gray-500 hover:text-gray-400 px-3 py-1.5"
+            >
+              סגור
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -234,7 +384,7 @@ export function ContactMessagesManager() {
           <AlertTriangle size={16} className="text-amber-400 shrink-0" />
           <p className="text-xs text-amber-300">
             <span className="font-bold">{staleCount} {staleCount === 1 ? 'פנייה ממתינה' : 'פניות ממתינות'}</span>
-            {' '}יותר מ-{STALE_DAYS} ימים ללא טיפול
+            {' '}יותר מ-{alertSettings.staleDays} ימים ללא טיפול
           </p>
         </div>
       )}
@@ -295,7 +445,7 @@ export function ContactMessagesManager() {
                   </div>
 
                   <div className="text-left shrink-0 flex items-center gap-2">
-                    {msg.status === 'new' && daysOld(msg.created_at) >= STALE_DAYS && (
+                    {alertSettings.statuses.includes(msg.status) && daysOld(msg.created_at) >= alertSettings.staleDays && (
                       <span className="flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">
                         <AlertTriangle size={10} />
                         {daysOld(msg.created_at)} ימים

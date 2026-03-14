@@ -53,7 +53,7 @@ export function ContentPreviewModal({ session, onClose }: Props) {
             <span className="text-blue-400 text-xs font-semibold">תצוגה מקדימה</span>
             <h2 id="preview-title" className="text-lg font-bold text-white">{session.title}</h2>
           </div>
-          <button onClick={onClose} aria-label="סגור תצוגה מקדימה" className="text-gray-400 hover:text-white transition-colors p-1">
+          <button onClick={onClose} aria-label="סגור תצוגה מקדימה" title="סגור" className="text-gray-400 hover:text-white transition-colors p-1">
             <X size={20} />
           </button>
         </div>

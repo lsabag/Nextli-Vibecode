@@ -97,6 +97,7 @@ export function PromptsManager({ sessionId }: { sessionId: string }) {
                 })}
                 className="text-gray-500 hover:text-blue-400 transition-colors p-1"
                 aria-label="ערוך פרומפט"
+                title="ערוך"
               >
                 <Pencil size={12} />
               </button>
@@ -104,6 +105,7 @@ export function PromptsManager({ sessionId }: { sessionId: string }) {
                 onClick={() => handleDelete(prompt.id)}
                 className="text-gray-600 hover:text-red-400 transition-colors p-1"
                 aria-label="מחק פרומפט"
+                title="מחק"
               >
                 <Trash2 size={12} />
               </button>

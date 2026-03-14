@@ -165,10 +165,10 @@ export function IntakeManager() {
             {/* Header row */}
             <div className="flex items-center gap-3 p-4">
               <div className="flex flex-col gap-0.5">
-                <button onClick={() => moveQuestion(idx, -1)} disabled={idx === 0} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors">
+                <button onClick={() => moveQuestion(idx, -1)} disabled={idx === 0} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors" title="הזז למעלה">
                   <ChevronUp size={14} />
                 </button>
-                <button onClick={() => moveQuestion(idx, 1)} disabled={idx === questions.length - 1} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors">
+                <button onClick={() => moveQuestion(idx, 1)} disabled={idx === questions.length - 1} className="text-gray-600 hover:text-gray-400 disabled:opacity-20 transition-colors" title="הזז למטה">
                   <ChevronDown size={14} />
                 </button>
               </div>

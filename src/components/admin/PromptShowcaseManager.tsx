@@ -274,7 +274,7 @@ export function PromptShowcaseManager() {
                   <span className="text-[10px] text-gray-500 font-medium">פרומפט {i + 1}</span>
                   {demoPrompts.length > 1 && (
                     <button onClick={() => { setDemoPrompts(prev => prev.filter((_, j) => j !== i)); markContentDirty('demo_prompts') }}
-                      className="text-red-400/60 hover:text-red-400 p-1 rounded hover:bg-red-500/10 transition-colors"><Trash2 size={12} /></button>
+                      className="text-red-400/60 hover:text-red-400 p-1 rounded hover:bg-red-500/10 transition-colors" title="מחק"><Trash2 size={12} /></button>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -306,7 +306,7 @@ export function PromptShowcaseManager() {
                   <span className="text-[10px] text-gray-500 font-medium">תרחיש {i + 1}</span>
                   {beforeAfter.length > 1 && (
                     <button onClick={() => { setBeforeAfter(prev => prev.filter((_, j) => j !== i)); markContentDirty('before_after') }}
-                      className="text-red-400/60 hover:text-red-400 p-1 rounded hover:bg-red-500/10 transition-colors"><Trash2 size={12} /></button>
+                      className="text-red-400/60 hover:text-red-400 p-1 rounded hover:bg-red-500/10 transition-colors" title="מחק"><Trash2 size={12} /></button>
                   )}
                 </div>
                 <Field label="שם הטאב" value={item.label} onChange={v => { const n = [...beforeAfter]; n[i] = { ...n[i], label: v }; setBeforeAfter(n); markContentDirty('before_after') }} />
@@ -342,7 +342,7 @@ export function PromptShowcaseManager() {
                   <span className="text-[10px] text-gray-500 font-medium">תרחיש {i + 1}</span>
                   {chatScenarios.length > 1 && (
                     <button onClick={() => { setChatScenarios(prev => prev.filter((_, j) => j !== i)); markContentDirty('chat_scenarios') }}
-                      className="text-red-400/60 hover:text-red-400 p-1 rounded hover:bg-red-500/10 transition-colors"><Trash2 size={12} /></button>
+                      className="text-red-400/60 hover:text-red-400 p-1 rounded hover:bg-red-500/10 transition-colors" title="מחק"><Trash2 size={12} /></button>
                   )}
                 </div>
                 <Field label="הודעת המשתמש" value={s.userMsg} onChange={v => { const n = [...chatScenarios]; n[i] = { ...n[i], userMsg: v }; setChatScenarios(n); markContentDirty('chat_scenarios') }} />

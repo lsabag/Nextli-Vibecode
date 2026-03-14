@@ -248,6 +248,7 @@ export function CoursesManager() {
                     })}
                     className="text-gray-500 hover:text-blue-400 transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-xl"
                     aria-label="ערוך קורס"
+                    title="ערוך"
                   >
                     <Pencil size={14} />
                   </button>
@@ -262,6 +263,7 @@ export function CoursesManager() {
                     onClick={() => handleDelete(course.id)}
                     className="text-gray-600 hover:text-red-400 transition-colors p-2"
                     aria-label="מחק קורס"
+                    title="מחק"
                   >
                     <Trash2 size={14} />
                   </button>

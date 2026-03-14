@@ -275,6 +275,7 @@ function SortableItemRow({
             onClick={() => onMoveItem(item, 'up')}
             disabled={isFirst}
             aria-label="העבר למעלה"
+            title="למעלה"
             className="p-1.5 rounded-lg text-gray-600 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
           >
             <ArrowUp size={13} />
@@ -283,6 +284,7 @@ function SortableItemRow({
             onClick={() => onMoveItem(item, 'down')}
             disabled={isLast}
             aria-label="העבר למטה"
+            title="למטה"
             className="p-1.5 rounded-lg text-gray-600 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
           >
             <ArrowDown size={13} />
@@ -290,6 +292,7 @@ function SortableItemRow({
           <button
             onClick={() => onDuplicate(item)}
             aria-label={`שכפל ${item.title}`}
+            title="שכפל"
             className="p-1.5 rounded-lg text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
           >
             <Copy size={13} />
@@ -309,6 +312,7 @@ function SortableItemRow({
           <button
             onClick={() => onRemove(item.id)}
             aria-label={`מחק ${item.title}`}
+            title="מחק"
             className="p-1.5 rounded-lg text-gray-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
           >
             <Trash2 size={14} />

@@ -166,6 +166,7 @@ export function TeamManager() {
                       onClick={() => clearImage(member.id)}
                       className="absolute -top-1 -left-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 transition-colors"
                       aria-label="הסר תמונה"
+                      title="הסר תמונה"
                     >
                       <X size={8} />
                     </button>
@@ -189,6 +190,7 @@ export function TeamManager() {
                 <button
                   onClick={() => fileInputRefs.current[member.id]?.click()}
                   className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white/10 hover:bg-white/20 text-gray-300 text-[8px] px-1.5 py-0.5 rounded transition-colors whitespace-nowrap"
+                  title="העלה תמונה"
                 >
                   <Upload size={8} />
                 </button>
@@ -265,6 +267,7 @@ export function TeamManager() {
                 onClick={() => handleDelete(member.id)}
                 className="p-1 text-gray-700 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
                 aria-label={`מחק ${member.name || 'חבר צוות'}`}
+                title="מחק"
               >
                 <Trash2 size={14} />
               </button>

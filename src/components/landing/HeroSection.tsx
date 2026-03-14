@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { trackEvent } from '@/lib/analytics'
+import { supabase } from '@/lib/supabase/client'
 import type { SystemSettingsMap, UserProfile } from '@/types'
 import type { AuthUser } from '@/lib/supabase/client'
 
@@ -32,6 +34,13 @@ export function HeroSection({ settings, user, profile }: Props) {
   const isLoggedIn = !!user
   const ctaRoute = isLoggedIn ? getPersonalAreaRoute(profile) : '/intake'
   const featureCards = parseJSON(settings.hero_features, defaultFeatureCards)
+  const [waitlistCount, setWaitlistCount] = useState(0)
+
+  useEffect(() => {
+    supabase.from('waitlist').select('id').then(({ data }) => {
+      if (data) setWaitlistCount(data.length)
+    })
+  }, [])
   const badgeText = settings.hero_badge_text || 'סטודיו אינטנסיבי (hands-on) — Vibe Coding'
   const badgeLink = settings.hero_badge_link || ''
 
@@ -170,6 +179,18 @@ export function HeroSection({ settings, user, profile }: Props) {
             {settings.hero_cta_secondary || 'ראה את המסלול'}
           </a>
         </motion.div>
+
+        {/* Social proof */}
+        {waitlistCount > 0 && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+            className="text-sm text-gray-400 mt-2 mb-4"
+          >
+            <span className="text-white font-bold">{waitlistCount}+</span> כבר נרשמו לרשימת ההמתנה
+          </motion.p>
+        )}
 
         <div className="mb-16" />
 

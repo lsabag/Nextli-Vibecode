@@ -425,6 +425,39 @@ async function runChecks(): Promise<CheckItem[]> {
     detail: 'שדה payment_status קיים בפרופיל משתמש אבל אין ספק תשלומים מחובר (PayPal / Stripe / גרין אינווייס).',
   })
 
+  // ── Pre-launch conversion essentials ────────────────────────────────────
+  items.push({
+    id: 'no-payment-provider',
+    category: 'השקה',
+    label: 'אין חיבור לתשלומים',
+    severity: 'critical',
+    detail: 'לא ניתן לקבל תשלומים. חבר Stripe או PayPlus כדי להפעיל רכישות.',
+  })
+
+  items.push({
+    id: 'no-auto-email-leads',
+    category: 'השקה',
+    label: 'אין אימייל אוטומטי ללידים',
+    severity: 'warn',
+    detail: 'לאחר שליחת טופס יצירת קשר אין מייל אוטומטי עם סילבוס/FAQ. שליחת מייל מגדילה המרות.',
+  })
+
+  items.push({
+    id: 'public-syllabus-page',
+    category: 'השקה',
+    label: 'אין דף סילבוס ציבורי',
+    severity: 'warn',
+    detail: 'הסילבוס נגיש רק מהאדמין. דף ציבורי עם פירוט המפגשים יעזור ל-SEO ולהמרה.',
+  })
+
+  items.push({
+    id: 'no-form-draft-save',
+    category: 'השקה',
+    label: 'אין שמירת טיוטא בטופס יצירת קשר',
+    severity: 'info',
+    detail: 'אם משתמש עוזב באמצע מילוי הטופס — הכל נמחק. שמירת טיוטא ב-localStorage תציל לידים.',
+  })
+
   // ── Accessibility compliance (Israeli Standard 5568) ──────────────────
   items.push({
     id: 'a11y-contrast-audit',

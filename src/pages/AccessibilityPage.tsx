@@ -84,7 +84,7 @@ export default function AccessibilityPage() {
             </p>
             <div className="mt-3 p-4 bg-white/5 border border-white/10 rounded-xl space-y-2 text-sm">
               <p><strong className="text-white">דוא״ל:</strong> accessibility@nextli.co.il</p>
-              <p><strong className="text-white">טלפון:</strong> 050-1234567</p>
+              <p><strong className="text-white">טלפון:</strong> 055-29-59-555</p>
             </div>
             <p className="mt-3 text-sm text-gray-500">
               אנו מתחייבים לטפל בכל פנייה תוך 5 ימי עסקים.

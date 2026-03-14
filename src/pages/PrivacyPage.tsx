@@ -62,7 +62,7 @@ export default function PrivacyPage() {
           <section>
             <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-2 text-sm">
               <p><strong className="text-white">דוא״ל:</strong> privacy@nextli.co.il</p>
-              <p><strong className="text-white">טלפון:</strong> 050-1234567</p>
+              <p><strong className="text-white">טלפון:</strong> 055-29-59-555</p>
             </div>
           </section>
         </div>

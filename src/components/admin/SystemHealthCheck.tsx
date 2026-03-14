@@ -408,15 +408,6 @@ async function runChecks(): Promise<CheckItem[]> {
     })
   }
 
-  // ── Deployment readiness ──────────────────────────────────────────────
-  items.push({
-    id: 'legal-contact-info',
-    category: 'השקה',
-    label: 'פרטי קשר בעמודים המשפטיים — placeholder',
-    severity: 'error',
-    detail: 'עמודי פרטיות, נגישות ותנאי שימוש מכילים אימיילים/טלפונים לדוגמה. עדכנו לפרטים אמיתיים.',
-  })
-
   // ── Features not yet implemented ────────────────────────────────────────
   items.push({
     id: 'ai-mentor-placeholder',

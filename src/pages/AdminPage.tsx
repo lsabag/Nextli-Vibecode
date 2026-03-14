@@ -23,6 +23,7 @@ const NotesViewer = lazy(() => import('@/components/admin/NotesViewer').then(m =
 const PromptShowcaseManager = lazy(() => import('@/components/admin/PromptShowcaseManager').then(m => ({ default: m.PromptShowcaseManager })))
 const IntakeManager = lazy(() => import('@/components/admin/IntakeManager').then(m => ({ default: m.IntakeManager })))
 const FeedbackViewer = lazy(() => import('@/components/admin/FeedbackViewer').then(m => ({ default: m.FeedbackViewer })))
+const ImageAltAudit = lazy(() => import('@/components/admin/ImageAltAudit').then(m => ({ default: m.ImageAltAudit })))
 const AdminDashboard = lazy(() => import('@/components/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
 
 // ── Navigation structure ─────────────────────────────────────────────────────
@@ -44,6 +45,10 @@ const navItems: NavItem[] = [
     id: 'health',
     label: 'לבדוק',
     icon: <ClipboardCheck size={18} />,
+    children: [
+      { id: 'health-check', label: 'בדיקת מערכת' },
+      { id: 'image-alt', label: 'ALT תמונות' },
+    ],
   },
   {
     id: 'students',
@@ -322,6 +327,8 @@ function renderContent(activeId: string, onNavigate: (tab: string) => void) {
   switch (activeId) {
     case 'dashboard':         return <AdminDashboard />
     case 'health':            return <SystemHealthCheck />
+    case 'health-check':      return <SystemHealthCheck />
+    case 'image-alt':         return <ImageAltAudit />
     case 'waitlist':          return <WaitlistManager />
     case 'insights':          return <StudentInsights />
     case 'wizard':            return <WizardManager />

@@ -107,7 +107,7 @@ export default function TermsPage() {
             <h2 className="text-xl font-bold text-white mb-3">יצירת קשר</h2>
             <div className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-2 text-sm">
               <p><strong className="text-white">דוא״ל:</strong> support@nextli.co.il</p>
-              <p><strong className="text-white">טלפון:</strong> 050-1234567</p>
+              <p><strong className="text-white">טלפון:</strong> 055-29-59-555</p>
             </div>
           </section>
         </div>

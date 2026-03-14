@@ -129,6 +129,7 @@ export default function LoginPage() {
               required
               autoComplete="email"
               aria-invalid={!!error}
+              aria-describedby={error ? 'login-error' : undefined}
               placeholder="you@example.com"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors text-white placeholder-gray-600"
               dir="ltr"
@@ -146,6 +147,7 @@ export default function LoginPage() {
               required
               autoComplete={mode === 'signup' || mode === 'setup' ? 'new-password' : 'current-password'}
               aria-invalid={!!error}
+              aria-describedby={error ? 'login-error' : undefined}
               placeholder="לפחות 6 תווים"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors text-white placeholder-gray-600"
               dir="ltr"
@@ -162,6 +164,7 @@ export default function LoginPage() {
                 onChange={e => setNewPassword(e.target.value)}
                 required
                 autoComplete="new-password"
+                aria-describedby={error ? 'login-error' : undefined}
                 placeholder="לפחות 6 תווים"
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition-colors text-white placeholder-gray-600"
                 dir="ltr"

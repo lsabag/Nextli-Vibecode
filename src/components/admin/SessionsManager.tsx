@@ -111,22 +111,22 @@ function PromptEditor({ content, onChange, inputCls }: { content: string; onChan
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3" dir="ltr">
         <div>
-          <label className="block text-xs text-gray-400 mb-1 font-medium">פרומפט בעברית</label>
-          <textarea value={he}
-            onChange={e => update('he', e.target.value)}
-            placeholder="תוכן הפרומפט בעברית..."
-            rows={4}
-            className={`${inputCls} resize-none font-mono`} dir="rtl" />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-400 mb-1 font-medium">פרומפט באנגלית</label>
+          <label className="block text-xs text-gray-400 mb-1 font-medium text-left">English Prompt</label>
           <textarea value={en}
             onChange={e => update('en', e.target.value)}
             placeholder="Prompt content in English..."
             rows={4}
-            className={`${inputCls} resize-none font-mono`} dir="ltr" />
+            className={`${inputCls} resize-none font-mono text-left`} dir="ltr" />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1 font-medium text-right" dir="rtl">פרומפט בעברית</label>
+          <textarea value={he}
+            onChange={e => update('he', e.target.value)}
+            placeholder="תוכן הפרומפט בעברית..."
+            rows={4}
+            className={`${inputCls} resize-none font-mono text-right`} dir="rtl" />
         </div>
       </div>
       <p className="text-xs text-gray-600">

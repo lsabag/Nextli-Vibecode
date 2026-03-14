@@ -133,7 +133,7 @@ function PromptBlock({ title, content, checkbox }: { title: string; content: str
                 <span className="text-xs text-blue-400 font-medium">English</span>
                 <CopyButton text={en} />
               </div>
-              <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3">
+              <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'plaintext', textAlign: 'left' }}>
                 {en}
               </pre>
             </div>
@@ -152,7 +152,7 @@ function PromptBlock({ title, content, checkbox }: { title: string; content: str
             <div className="flex justify-end mb-2">
               <CopyButton text={en} />
             </div>
-            <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" style={{ textAlign: 'left' }}>
+            <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="ltr" style={{ direction: 'ltr', unicodeBidi: 'plaintext', textAlign: 'left' }}>
               {en}
             </pre>
           </div>

@@ -126,7 +126,9 @@ function PromptEditor({ content, onChange, inputCls }: { content: string; onChan
             onChange={e => update('en', e.target.value)}
             placeholder="Prompt content in English..."
             rows={4}
-            className={`${inputCls} resize-none font-mono text-left`} dir="ltr" />
+            className={`${inputCls} resize-none font-mono text-left`}
+            dir="ltr"
+            style={{ direction: 'ltr', unicodeBidi: 'plaintext', textAlign: 'left' }} />
         </div>
       </div>
       <p className="text-xs text-gray-600">

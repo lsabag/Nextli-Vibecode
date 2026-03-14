@@ -138,15 +138,24 @@ function PromptBlock({ title, content, checkbox }: { title: string; content: str
               </pre>
             </div>
           </div>
-        ) : (
+        ) : he ? (
           <>
             <div className="flex justify-end mb-2">
-              <CopyButton text={he || en} />
+              <CopyButton text={he} />
             </div>
-            <pre className={`text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3`} dir={he ? 'rtl' : 'ltr'} style={he ? undefined : { unicodeBidi: 'isolate' }}>
-              {he || en}
+            <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="rtl">
+              {he}
             </pre>
           </>
+        ) : (
+          <div dir="ltr" style={{ unicodeBidi: 'isolate', textAlign: 'left' }}>
+            <div className="flex justify-end mb-2">
+              <CopyButton text={en} />
+            </div>
+            <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" style={{ textAlign: 'left' }}>
+              {en}
+            </pre>
+          </div>
         )}
       </div>
     </div>

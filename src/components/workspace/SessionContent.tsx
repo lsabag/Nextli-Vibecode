@@ -299,8 +299,8 @@ export function SessionContent({ session, course, userId, progress }: Props) {
                         className="w-full h-full"
                         allowFullScreen
                         title={item.title}
-                        sandbox="allow-same-origin allow-scripts allow-popups"
-                        referrerPolicy="no-referrer"
+                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
+                        referrerPolicy="no-referrer-when-downgrade"
                       />
                     </div>
                   </div>

@@ -92,7 +92,7 @@ export function ContentPreviewModal({ session, onClose }: Props) {
                   <div key={item.id} className="rounded-xl overflow-hidden border border-white/10">
                     <div className="bg-white/5 px-4 py-2 text-sm text-gray-300 font-medium">{item.title}</div>
                     <div className="aspect-video bg-black">
-                      <iframe src={toEmbedUrl(item.content)} className="w-full h-full" allowFullScreen title={item.title} sandbox="allow-same-origin allow-scripts allow-popups" referrerPolicy="no-referrer" />
+                      <iframe src={toEmbedUrl(item.content)} className="w-full h-full" allowFullScreen title={item.title} sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation" referrerPolicy="no-referrer-when-downgrade" />
                     </div>
                   </div>
                 )

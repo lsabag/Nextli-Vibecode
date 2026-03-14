@@ -464,15 +464,24 @@ function SettingsRenderer({ sections, title, defaultCollapsed = false }: Setting
     return init
   })
 
+  // Collect all keys from the given sections so we can ensure they exist
+  const sectionKeys = new Set(sections.flatMap(s => s.keys))
+
   function loadSettings() {
     setLoading(true)
     setFetchError(null)
     getAdminSystemSettings().then(map => {
-      setRows(
-        Object.entries(map)
-          .filter(([key]) => !FOMO_KEYS.has(key) && !isPromptShowcaseKey(key))
-          .map(([key, value]) => ({ key, value, dirty: false }))
-      )
+      const existing = Object.entries(map)
+        .filter(([key]) => !FOMO_KEYS.has(key) && !isPromptShowcaseKey(key))
+        .map(([key, value]) => ({ key, value, dirty: false }))
+      // Add missing section keys with empty default so fields are always visible
+      const existingKeys = new Set(existing.map(r => r.key))
+      for (const key of sectionKeys) {
+        if (!existingKeys.has(key)) {
+          existing.push({ key, value: '', dirty: false })
+        }
+      }
+      setRows(existing)
       setLoading(false)
     }).catch(err => { setFetchError(err?.message ?? 'שגיאה בטעינה'); setLoading(false) })
   }

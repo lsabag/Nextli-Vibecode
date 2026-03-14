@@ -4,6 +4,7 @@ import { FomoBanner } from '@/components/landing/FomoBanner'
 import type { FomoVariant } from '@/components/landing/FomoBanner'
 import { Save, RotateCcw } from 'lucide-react'
 import DateTimePicker from '@/components/ui/DateTimePicker'
+import { useAdminDirty } from '@/hooks/useAdminDirty'
 
 type FomoSettings = {
   fomo_banner_active: string
@@ -54,6 +55,7 @@ export function FomoBannerManager() {
   const [dirty, setDirty] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  useAdminDirty('fomo-banner', dirty)
 
   useEffect(() => {
     getAdminSystemSettings().then(map => {

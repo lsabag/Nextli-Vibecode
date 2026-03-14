@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { getAdminSystemSettings, updateSystemSetting } from '@/lib/supabase/queries/admin'
 import { Save, ChevronDown, ChevronUp, Plus, Trash2, GripVertical } from 'lucide-react'
+import { useAdminDirty } from '@/hooks/useAdminDirty'
 
 type SettingRow = { key: string; value: string; dirty: boolean }
 
@@ -457,6 +458,8 @@ function SettingsRenderer({ sections, title, defaultCollapsed = false }: Setting
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
+  const hasDirtyRows = useMemo(() => rows.some(r => r.dirty), [rows])
+  useAdminDirty(`settings-${title}`, hasDirtyRows)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
     if (!defaultCollapsed) return {}
     const init: Record<string, boolean> = {}

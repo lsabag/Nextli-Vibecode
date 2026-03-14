@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getAdminSystemSettings, updateSystemSetting } from '@/lib/supabase/queries/admin'
 import { Save, RotateCcw, ChevronDown, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
+import { useAdminDirty } from '@/hooks/useAdminDirty'
 
 // ── Default texts per variant ────────────────────────────────────────────────
 
@@ -232,6 +233,7 @@ export function PromptShowcaseManager() {
   }
 
   const totalDirty = dirty.size + contentDirty.size
+  useAdminDirty('prompt-showcase', totalDirty > 0)
   const [hiddenOpen, setHiddenOpen] = useState(false)
 
   const visibleVariants = VARIANTS.filter(v => visibility[v])

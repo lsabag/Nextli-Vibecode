@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   getAdminCourseSessions,
@@ -22,6 +22,7 @@ import { PromptsManager } from './PromptsManager'
 import { ContentPreviewModal } from './ContentPreviewModal'
 import { getAdminPrepChecklist } from '@/lib/supabase/queries/prep'
 import DateTimePicker from '@/components/ui/DateTimePicker'
+import { useAdminDirty } from '@/hooks/useAdminDirty'
 
 const contentTypeLabels: Record<ContentType, string> = {
   text:       'טקסט פשוט',
@@ -508,6 +509,8 @@ function SessionEditor({ session, courseStatus, onSessionUpdate }: {
 
   const infoChanged = title !== session.title || description !== session.description
   const scheduleChanged = (scheduledAt || '') !== (session.scheduled_at ?? '')
+  const hasDirty = useMemo(() => infoChanged || scheduleChanged || editingItem !== null, [infoChanged, scheduleChanged, editingItem])
+  useAdminDirty(`session-${session.id}`, hasDirty)
   const inputCls = 'w-full bg-[#0a0a0f] border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 outline-none focus:border-blue-500 transition-colors'
 
   return (

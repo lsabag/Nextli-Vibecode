@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase/client'
 import { SEOHead } from '@/components/shared/SEOHead'
+import { AdminDirtyProvider, UnsavedChangesDialog, useAdminDirty } from '@/hooks/useAdminDirty'
 import {
   LayoutDashboard, Users, GraduationCap, Home, Settings, Menu,
   ChevronDown, ClipboardCheck, Search, X, Monitor,
@@ -353,6 +354,14 @@ function renderContent(activeId: string, onNavigate: (tab: string) => void) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
+  return (
+    <AdminDirtyProvider>
+      <AdminPageInner />
+    </AdminDirtyProvider>
+  )
+}
+
+function AdminPageInner() {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -427,7 +436,9 @@ export default function AdminPage() {
     document.getElementById('main-content')?.scrollTo(0, 0)
   }, [activeId])
 
-  const navigate = useCallback((id: string) => {
+  const dirtyCtx = useAdminDirty()
+
+  const doNavigate = useCallback((id: string) => {
     const parentId = childToParent.get(id)
     if (parentId) {
       setSearchParams({ tab: parentId, sub: id })
@@ -438,6 +449,10 @@ export default function AdminPage() {
     setSearchQuery('')
     setSearchFocused(false)
   }, [setSearchParams])
+
+  const navigate = useCallback((id: string) => {
+    dirtyCtx.confirmNavigation(() => doNavigate(id))
+  }, [dirtyCtx, doNavigate])
 
   function toggleGroup(groupId: string) {
     setExpandedGroups(prev => {
@@ -458,6 +473,7 @@ export default function AdminPage() {
   return (
     <div className="h-screen bg-[#0a0a0f] flex overflow-hidden" dir="rtl">
       <SEOHead title="לוח ניהול" noindex />
+      <UnsavedChangesDialog />
 
       {/* Mobile hamburger */}
       <button

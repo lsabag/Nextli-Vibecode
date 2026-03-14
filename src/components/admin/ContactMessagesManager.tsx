@@ -64,7 +64,16 @@ export function ContactMessagesManager() {
         supabase.from('waitlist').select('*'),
         supabase.from('user_profiles').select('*'),
       ])
-      setMessages(msgs)
+      // Normalize messages — DB rows may lack new columns if migration hasn't run
+      const normalized = msgs.map(m => ({
+        ...m,
+        status: m.status || 'new',
+        handler_notes: m.handler_notes ?? '',
+        handled_by: m.handled_by ?? null,
+        handled_at: m.handled_at ?? null,
+        is_read: typeof m.is_read === 'number' ? !!m.is_read : (m.is_read ?? false),
+      })) as ContactMessage[]
+      setMessages(normalized)
       setWaitlist((wl ?? []) as WaitlistEntry[])
       setStudents((st ?? []) as UserProfile[])
     } catch {
@@ -218,7 +227,7 @@ export function ContactMessagesManager() {
           {filtered.map(msg => {
             const isExpanded = expandedId === msg.id
             const lead = getLeadStatus(msg.email)
-            const cfg = STATUS_CONFIG[msg.status]
+            const cfg = STATUS_CONFIG[msg.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.new
             const StatusIcon = cfg.icon
 
             return (

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { GripVertical, ChevronUp, ChevronDown, Eye, EyeOff, RotateCcw, Save, Pencil, Check, X } from 'lucide-react'
+import { GripVertical, ChevronUp, ChevronDown, ChevronLeft, Eye, EyeOff, RotateCcw, Save, Pencil, Check, X } from 'lucide-react'
 import { useAdminDirty } from '@/hooks/useAdminDirty'
 
 export type NavOrderItem = {
@@ -21,6 +21,7 @@ export function NavOrderManager({ items, onChange, onSave, onReset, dirty }: Pro
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
   const dragItem = useRef<number | null>(null)
   const dragOverItem = useRef<number | null>(null)
   const childDragParent = useRef<string | null>(null)
@@ -160,7 +161,11 @@ export function NavOrderManager({ items, onChange, onSave, onReset, dirty }: Pro
       </div>
 
       <div className="space-y-1">
-        {items.map((item, idx) => (
+        {items.map((item, idx) => {
+          const hasChildren = item.children && item.children.length > 0
+          const isExpanded = expandedGroups.has(item.id)
+
+          return (
           <div key={item.id}>
             {/* Parent item */}
             <div
@@ -174,6 +179,20 @@ export function NavOrderManager({ items, onChange, onSave, onReset, dirty }: Pro
               } hover:border-white/20 cursor-grab active:cursor-grabbing`}
             >
               <GripVertical size={14} className="text-gray-600 shrink-0" />
+
+              {hasChildren && (
+                <button
+                  onClick={() => setExpandedGroups(prev => {
+                    const next = new Set(prev)
+                    if (next.has(item.id)) next.delete(item.id)
+                    else next.add(item.id)
+                    return next
+                  })}
+                  className="text-gray-500 hover:text-gray-300 p-0.5 transition-transform shrink-0"
+                >
+                  <ChevronLeft size={14} className={`transition-transform ${isExpanded ? '-rotate-90' : ''}`} />
+                </button>
+              )}
 
               {editingId === item.id ? (
                 <div className="flex-1 flex items-center gap-1.5">
@@ -192,6 +211,9 @@ export function NavOrderManager({ items, onChange, onSave, onReset, dirty }: Pro
               ) : (
                 <>
                   <span className="flex-1 text-sm text-white font-medium">{item.label}</span>
+                  {hasChildren && (
+                    <span className="text-[10px] text-gray-600">{item.children!.length} פריטים</span>
+                  )}
                   <span className="text-[10px] text-gray-600 font-mono">{item.id}</span>
                 </>
               )}
@@ -214,8 +236,8 @@ export function NavOrderManager({ items, onChange, onSave, onReset, dirty }: Pro
               )}
             </div>
 
-            {/* Children */}
-            {item.children && item.children.length > 0 && (
+            {/* Children — collapsible */}
+            {hasChildren && isExpanded && (
               <div className="mr-6 mt-1 mb-2 space-y-0.5">
                 {item.children.map((child, cIdx) => (
                   <div
@@ -273,7 +295,8 @@ export function NavOrderManager({ items, onChange, onSave, onReset, dirty }: Pro
               </div>
             )}
           </div>
-        ))}
+        )
+        })}
       </div>
     </div>
   )

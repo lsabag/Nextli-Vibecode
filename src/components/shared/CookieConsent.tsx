@@ -3,13 +3,11 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Cookie } from 'lucide-react'
 import { loadAnalytics, disableAnalytics } from '@/lib/analytics'
-import { useFocusTrap } from '@/hooks/useFocusTrap'
 
 const COOKIE_KEY = 'nextli-cookie-consent'
 
 export function CookieConsent() {
   const [visible, setVisible] = useState(false)
-  const bannerRef = useFocusTrap<HTMLDivElement>(visible)
 
   useEffect(() => {
     const consent = localStorage.getItem(COOKIE_KEY)
@@ -35,14 +33,12 @@ export function CookieConsent() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          ref={bannerRef}
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ duration: 0.3 }}
-          role="dialog"
+          role="region"
           aria-label="הסכמה לעוגיות"
-          aria-modal="true"
           dir="rtl"
           className="fixed bottom-0 inset-x-0 z-[9998] p-4"
         >

@@ -128,12 +128,12 @@ function PromptBlock({ title, content, checkbox }: { title: string; content: str
               </pre>
             </div>
             {/* English — left side (second in RTL) */}
-            <div>
-              <div className="flex items-center justify-between mb-2" dir="ltr">
+            <div dir="ltr" style={{ unicodeBidi: 'isolate' }}>
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-blue-400 font-medium">English</span>
                 <CopyButton text={en} />
               </div>
-              <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="ltr">
+              <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3">
                 {en}
               </pre>
             </div>
@@ -143,7 +143,7 @@ function PromptBlock({ title, content, checkbox }: { title: string; content: str
             <div className="flex justify-end mb-2">
               <CopyButton text={he || en} />
             </div>
-            <pre className={`text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3`} dir={he ? 'rtl' : 'ltr'}>
+            <pre className={`text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3`} dir={he ? 'rtl' : 'ltr'} style={he ? undefined : { unicodeBidi: 'isolate' }}>
               {he || en}
             </pre>
           </>

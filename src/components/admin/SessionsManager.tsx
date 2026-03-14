@@ -120,8 +120,8 @@ function PromptEditor({ content, onChange, inputCls }: { content: string; onChan
             rows={4}
             className={`${inputCls} resize-none font-mono text-right`} dir="rtl" />
         </div>
-        <div>
-          <label className="block text-xs text-gray-400 mb-1 font-medium text-left" dir="ltr">English Prompt</label>
+        <div dir="ltr" style={{ unicodeBidi: 'isolate' }}>
+          <label className="block text-xs text-gray-400 mb-1 font-medium">English Prompt</label>
           <textarea value={en}
             onChange={e => update('en', e.target.value)}
             placeholder="Prompt content in English..."

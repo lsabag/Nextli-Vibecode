@@ -71,35 +71,83 @@ function ContentCheckbox({ checked, onToggle, label }: { checked: boolean; onTog
   )
 }
 
-function PromptBlock({ title, content, checkbox }: { title: string; content: string; checkbox: React.ReactNode }) {
+function parsePromptContent(content: string): { he: string; en: string } {
+  if (!content) return { he: '', en: '' }
+  try {
+    const parsed = JSON.parse(content)
+    if (parsed && typeof parsed === 'object' && ('he' in parsed || 'en' in parsed)) {
+      return { he: parsed.he || '', en: parsed.en || '' }
+    }
+  } catch { /* not JSON — legacy plain text */ }
+  return { he: '', en: content }
+}
+
+function CopyButton({ text, label }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(content)
+    await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   return (
+    <button
+      onClick={handleCopy}
+      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${
+        copied
+          ? 'bg-green-500/20 text-green-400'
+          : 'bg-white/10 hover:bg-white/15 text-gray-300 hover:text-white'
+      }`}
+    >
+      {copied ? <><CheckCheck size={13} /> הועתק!</> : <><Copy size={13} /> {label || 'העתק'}</>}
+    </button>
+  )
+}
+
+function PromptBlock({ title, content, checkbox }: { title: string; content: string; checkbox: React.ReactNode }) {
+  const { he, en } = parsePromptContent(content)
+  const hasBoth = !!he && !!en
+
+  return (
     <div className="flex items-start gap-3">
       {checkbox}
       <div className="flex-1 bg-purple-500/5 border border-purple-500/20 rounded-xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-white font-semibold text-sm">{title}</h3>
-          <button
-            onClick={handleCopy}
-            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all ${
-              copied
-                ? 'bg-green-500/20 text-green-400'
-                : 'bg-white/10 hover:bg-white/15 text-gray-300 hover:text-white'
-            }`}
-          >
-            {copied ? <><CheckCheck size={13} /> הועתק!</> : <><Copy size={13} /> העתק</>}
-          </button>
-        </div>
-        <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="ltr">
-          {content}
-        </pre>
+        <h3 className="text-white font-semibold text-sm mb-3">{title}</h3>
+
+        {hasBoth ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Hebrew — right side on desktop */}
+            <div className="order-1 md:order-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-purple-400 font-medium">עברית</span>
+                <CopyButton text={he} />
+              </div>
+              <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="rtl">
+                {he}
+              </pre>
+            </div>
+            {/* English — left side on desktop */}
+            <div className="order-2 md:order-1">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-blue-400 font-medium">English</span>
+                <CopyButton text={en} />
+              </div>
+              <pre className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3" dir="ltr">
+                {en}
+              </pre>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-end mb-2">
+              <CopyButton text={he || en} />
+            </div>
+            <pre className={`text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-mono bg-black/20 rounded-lg p-3`} dir={he ? 'rtl' : 'ltr'}>
+              {he || en}
+            </pre>
+          </>
+        )}
       </div>
     </div>
   )

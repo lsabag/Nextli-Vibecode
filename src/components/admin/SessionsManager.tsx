@@ -82,6 +82,60 @@ function newSession(courseId: string, order: number): Omit<CourseSession, 'creat
   }
 }
 
+// ── Prompt Editor (Hebrew + English) ─────────────────────────────────────────
+
+function parsePromptContent(content: string): { he: string; en: string } {
+  if (!content) return { he: '', en: '' }
+  try {
+    const parsed = JSON.parse(content)
+    if (parsed && typeof parsed === 'object' && ('he' in parsed || 'en' in parsed)) {
+      return { he: parsed.he || '', en: parsed.en || '' }
+    }
+  } catch { /* not JSON — legacy plain text */ }
+  // Legacy: plain text treated as English
+  return { he: '', en: content }
+}
+
+function PromptEditor({ content, onChange, inputCls }: { content: string; onChange: (c: string) => void; inputCls: string }) {
+  const { he, en } = parsePromptContent(content)
+
+  function update(field: 'he' | 'en', value: string) {
+    const updated = field === 'he' ? { he: value, en } : { he, en: value }
+    // If both empty, store empty string; otherwise JSON
+    if (!updated.he && !updated.en) {
+      onChange('')
+    } else {
+      onChange(JSON.stringify(updated))
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-gray-400 mb-1 font-medium">פרומפט בעברית</label>
+          <textarea value={he}
+            onChange={e => update('he', e.target.value)}
+            placeholder="תוכן הפרומפט בעברית..."
+            rows={4}
+            className={`${inputCls} resize-none font-mono`} dir="rtl" />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1 font-medium">פרומפט באנגלית</label>
+          <textarea value={en}
+            onChange={e => update('en', e.target.value)}
+            placeholder="Prompt content in English..."
+            rows={4}
+            className={`${inputCls} resize-none font-mono`} dir="ltr" />
+        </div>
+      </div>
+      <p className="text-xs text-gray-600">
+        אפשר למלא שדה אחד או שניהם. אם שניהם מלאים — התלמיד יראה אותם זה לצד זה עם כפתור העתקה לכל אחד.
+      </p>
+    </div>
+  )
+}
+
 // ── Content Block Editor ─────────────────────────────────────────────────────
 
 function ContentBlockEditor({ item, onChange, onSave, onCancel, saving, courseId }: {
@@ -173,14 +227,7 @@ function ContentBlockEditor({ item, onChange, onSave, onCancel, saving, courseId
           </p>
         </div>
       ) : item.content_type === 'prompt' ? (
-        <div className="space-y-2">
-          <textarea value={item.content}
-            onChange={e => onChange({ ...item, content: e.target.value })}
-            placeholder="תוכן הפרומפט — התלמיד ילחץ ויעתיק אותו..."
-            rows={4}
-            className={`${inputCls} resize-none font-mono`} dir="ltr" />
-          <p className="text-xs text-gray-600">התלמיד יראה את הפרומפט עם כפתור "העתק" שמעתיק ישירות ללוח.</p>
-        </div>
+        <PromptEditor content={item.content} onChange={content => onChange({ ...item, content })} inputCls={inputCls} />
       ) : item.content_type === 'feedback' ? (
         <p className="text-xs text-gray-500 bg-purple-500/5 border border-purple-500/20 rounded-lg p-3">
           בלוק פידבק — התלמיד יוכל לכתוב מה למד ומה חסר לו. הנתונים יופיעו בלשונית "הערות תלמידים".

@@ -22,14 +22,18 @@ export default function SyllabusPage() {
       getPublicCourseSessions(),
       supabase.from('system_settings').select('*'),
     ]).then(([sessionsData, { data: settingsData }]) => {
-      const hasPublicField = sessionsData.some(s => s.public_visible !== undefined)
-      const visible = hasPublicField ? sessionsData.filter(s => s.public_visible) : sessionsData
-      setSessions(visible)
       const map: SystemSettingsMap = {}
       for (const row of (settingsData ?? []) as Array<{ key: string; value: string }>) {
         map[row.key] = row.value
       }
       setSettings(map)
+      if (map.syllabus_public_enabled !== 'true') {
+        setLoading(false)
+        return
+      }
+      const hasPublicField = sessionsData.some(s => s.public_visible !== undefined)
+      const visible = hasPublicField ? sessionsData.filter(s => s.public_visible) : sessionsData
+      setSessions(visible)
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
@@ -75,7 +79,17 @@ export default function SyllabusPage() {
         </motion.div>
 
         {/* Sessions */}
-        {loading ? (
+        {!loading && settings.syllabus_public_enabled !== 'true' ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500 text-lg mb-4">הסילבוס יפורסם בקרוב</p>
+            <Link
+              to="/"
+              className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+            >
+              חזרה לעמוד הראשי
+            </Link>
+          </div>
+        ) : loading ? (
           <div className="space-y-6">
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white/5 rounded-2xl h-40 animate-pulse" />

@@ -442,13 +442,16 @@ async function runChecks(): Promise<CheckItem[]> {
     detail: 'לאחר שליחת טופס יצירת קשר אין מייל אוטומטי עם סילבוס/FAQ. שליחת מייל מגדילה המרות.',
   })
 
-  items.push({
-    id: 'public-syllabus-page',
-    category: 'השקה',
-    label: 'אין דף סילבוס ציבורי',
-    severity: 'warn',
-    detail: 'הסילבוס נגיש רק מהאדמין. דף ציבורי עם פירוט המפגשים יעזור ל-SEO ולהמרה.',
-  })
+  if (settingsMap.syllabus_public_enabled !== 'true') {
+    items.push({
+      id: 'public-syllabus-page',
+      category: 'השקה',
+      label: 'דף סילבוס ציבורי כבוי',
+      severity: 'warn',
+      detail: 'הסילבוס לא מוצג לציבור. הפעל כדי לשפר SEO והמרה. שלוט בתוכן דרך ניהול מפגשים.',
+      action: { label: 'הגדרות סילבוס', tab: 'landing&sub=landing-settings' },
+    })
+  }
 
   items.push({
     id: 'no-form-draft-save',

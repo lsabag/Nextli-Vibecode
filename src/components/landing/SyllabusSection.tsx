@@ -20,8 +20,10 @@ export function SyllabusSection({ settings }: Props) {
   const [sessions, setSessions] = useState<CourseSession[]>([])
   const [loading, setLoading] = useState(true)
   const badges = parseJSON(settings.syllabus_badges, defaultBadges)
+  const isEnabled = settings.syllabus_public_enabled === 'true'
 
   useEffect(() => {
+    if (!isEnabled) { setLoading(false); return }
     getPublicCourseSessions()
       .then(data => {
         // Only show sessions marked as public (or all if none have the field yet)
@@ -31,7 +33,9 @@ export function SyllabusSection({ settings }: Props) {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [])
+  }, [isEnabled])
+
+  if (!isEnabled) return null
 
   return (
     <section id="syllabus" className="max-w-7xl mx-auto px-6 py-20" dir="rtl" aria-labelledby="syllabus-heading">

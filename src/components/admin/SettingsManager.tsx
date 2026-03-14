@@ -33,6 +33,7 @@ const settingLabels: Record<string, string> = {
   hero_show_waitlist_count: 'הצג מונה נרשמים (true/false)',
 
   // Syllabus
+  syllabus_public_enabled: 'הפעל סילבוס ציבורי (true/false)',
   syllabus_heading:    'כותרת',
   syllabus_subheading: 'תת-כותרת',
   syllabus_badges:     'אייקונים ותגיות מפגשים',
@@ -108,7 +109,7 @@ const LANDING_SECTIONS: Section[] = [
   {
     title: 'סילבוס — מסלול הלימוד',
     icon: '📚',
-    keys: ['syllabus_heading', 'syllabus_subheading', 'syllabus_badges'],
+    keys: ['syllabus_public_enabled', 'syllabus_heading', 'syllabus_subheading', 'syllabus_badges'],
   },
   {
     title: 'פרויקטים',
@@ -181,7 +182,7 @@ const GENERAL_SECTIONS: Section[] = [
 
 const ALL_SECTIONS = [...LANDING_SECTIONS, ...STUDENT_SECTIONS, ...GENERAL_SECTIONS]
 
-const TOGGLE_KEYS = new Set(['ai_mentor_active'])
+const TOGGLE_KEYS = new Set(['ai_mentor_active', 'syllabus_public_enabled'])
 const VISUAL_JSON_KEYS = new Set(['hero_features', 'syllabus_badges', 'navbar_links'])
 const TEXTAREA_KEYS = new Set(['hero_description', 'contact_description'])
 const EMOJI_PICKER_KEYS = new Set(['navbar_popup_icon'])

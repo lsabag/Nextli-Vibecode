@@ -1,7 +1,10 @@
 /**
  * Change password handler — POST /api/auth/change-password
- * Requires email + current password + new password.
+ * Requires valid auth cookie + current password + new password.
+ * The JWT must match the user whose password is being changed.
  */
+
+import { getAuth } from '../_auth'
 
 interface Env {
   DB: D1Database;
@@ -9,13 +12,13 @@ interface Env {
 }
 
 interface ChangeBody {
-  email: string;
   currentPassword: string;
   newPassword: string;
 }
 
 interface UserRow {
   id: string;
+  email: string;
   password_hash: string | null;
 }
 
@@ -41,31 +44,46 @@ async function verifyPassword(password: string, stored: string): Promise<boolean
   return result === stored;
 }
 
+const MIN_PASSWORD_LENGTH = 8;
+
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
+    // Require authentication via cookie
+    const auth = await getAuth(context.request, context.env.JWT_SECRET);
+    if (!auth) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     const body = (await context.request.json()) as ChangeBody;
 
-    if (!body.email || !body.currentPassword || !body.newPassword) {
+    if (!body.currentPassword || !body.newPassword) {
       return Response.json({ error: 'All fields are required' }, { status: 400 });
     }
 
-    if (body.newPassword.length < 6) {
-      return Response.json({ error: 'הסיסמה החדשה חייבת להכיל לפחות 6 תווים' }, { status: 400 });
+    if (body.newPassword.length < MIN_PASSWORD_LENGTH) {
+      return Response.json({ error: `הסיסמה החדשה חייבת להכיל לפחות ${MIN_PASSWORD_LENGTH} תווים` }, { status: 400 });
     }
 
+    if (!/[a-zA-Z]/.test(body.newPassword) || !/[0-9]/.test(body.newPassword)) {
+      return Response.json({ error: 'הסיסמה חייבת להכיל לפחות אות אחת ומספר אחד' }, { status: 400 });
+    }
+
+    // Look up user by JWT sub (not by user-supplied email)
     const user = await context.env.DB.prepare(
-      `SELECT id, password_hash FROM user_profiles WHERE email = ? LIMIT 1`
+      `SELECT id, email, password_hash FROM user_profiles WHERE id = ? LIMIT 1`
     )
-      .bind(body.email)
+      .bind(auth.sub)
       .first<UserRow>();
 
     if (!user || !user.password_hash || user.password_hash === 'TEMP_WILL_SET_LATER') {
-      return Response.json({ error: 'משתמש לא נמצא' }, { status: 404 });
+      // Generic error — don't reveal whether user exists
+      return Response.json({ error: 'הפרטים שגויים' }, { status: 401 });
     }
 
     const valid = await verifyPassword(body.currentPassword, user.password_hash);
     if (!valid) {
-      return Response.json({ error: 'הסיסמה הנוכחית שגויה' }, { status: 401 });
+      // Same generic error
+      return Response.json({ error: 'הפרטים שגויים' }, { status: 401 });
     }
 
     const salt = crypto.getRandomValues(new Uint8Array(16));

@@ -2,6 +2,9 @@
  * Setup password handler — POST /api/auth/setup-password
  * Allows setting a password for users who have TEMP_WILL_SET_LATER as their hash.
  * This is a one-time setup endpoint.
+ *
+ * Security: uses generic error messages to prevent email enumeration,
+ * and enforces password complexity requirements.
  */
 
 interface Env {
@@ -33,6 +36,8 @@ async function hashPassword(password: string, salt: Uint8Array): Promise<string>
   return `${saltB64}:${hashB64}`;
 }
 
+const MIN_PASSWORD_LENGTH = 8;
+
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
     const body = (await context.request.json()) as SetupBody;
@@ -41,8 +46,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    if (body.password.length < 6) {
-      return Response.json({ error: 'Password must be at least 6 characters' }, { status: 400 });
+    if (body.password.length < MIN_PASSWORD_LENGTH) {
+      return Response.json({ error: `הסיסמה חייבת להכיל לפחות ${MIN_PASSWORD_LENGTH} תווים` }, { status: 400 });
+    }
+
+    if (!/[a-zA-Z]/.test(body.password) || !/[0-9]/.test(body.password)) {
+      return Response.json({ error: 'הסיסמה חייבת להכיל לפחות אות אחת ומספר אחד' }, { status: 400 });
     }
 
     const user = await context.env.DB.prepare(
@@ -51,13 +60,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .bind(body.email)
       .first<UserRow>();
 
+    // Generic error for all failure cases — prevents email enumeration
+    const genericError = { error: 'Unable to set password. Please contact support.' };
+
     if (!user) {
-      return Response.json({ error: 'User not found' }, { status: 404 });
+      return Response.json(genericError, { status: 400 });
     }
 
     // Only allow setup if password hasn't been set yet
     if (user.password_hash && user.password_hash !== 'TEMP_WILL_SET_LATER') {
-      return Response.json({ error: 'Password already set. Use login instead.' }, { status: 400 });
+      return Response.json(genericError, { status: 400 });
     }
 
     // Hash and store

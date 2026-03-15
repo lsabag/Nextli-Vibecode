@@ -1,7 +1,9 @@
 /**
  * Contact form handler — saves message to D1 and sends Telegram notification.
- * Includes rate limiting (3 messages per IP per hour) and honeypot spam protection.
+ * Includes rate limiting (2 messages per IP per hour) and honeypot spam protection.
  */
+
+import { escapeTelegramMarkdown } from './_auth'
 
 interface Env {
   DB: D1Database;
@@ -38,7 +40,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const db = context.env.DB
-    const ip = context.request.headers.get('CF-Connecting-IP') || 'unknown'
+    const ip = context.request.headers.get('CF-Connecting-IP')
+    if (!ip) {
+      return Response.json({ error: 'Unable to process request' }, { status: 400 })
+    }
 
     // Rate limiting: check messages from this IP in the last hour
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
@@ -66,12 +71,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (botToken && chatId) {
       try {
+        const safeName = escapeTelegramMarkdown(name)
+        const safeEmail = escapeTelegramMarkdown(email)
+        const safeMessage = escapeTelegramMarkdown(message || '(ללא הודעה)')
         const text = [
           '📩 *הודעה חדשה מטופס יצירת קשר*',
           '',
-          `*שם:* ${name}`,
-          `*אימייל:* ${email}`,
-          `*הודעה:* ${message || '(ללא הודעה)'}`,
+          `*שם:* ${safeName}`,
+          `*אימייל:* ${safeEmail}`,
+          `*הודעה:* ${safeMessage}`,
         ].join('\n')
 
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {

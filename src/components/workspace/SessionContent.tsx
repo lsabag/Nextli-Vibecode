@@ -115,7 +115,7 @@ function PromptBlock({ title, content, checkbox }: { title: string; content: str
       <div className="flex-1 bg-purple-500/5 border border-purple-500/20 rounded-xl p-5">
         <h3 className="text-white font-semibold text-sm mb-3">{title}</h3>
         {prefix && prefix !== '<p></p>' && (
-          <div className="text-gray-300 text-sm leading-relaxed mb-3 prose prose-invert prose-sm max-w-none" dir="rtl" dangerouslySetInnerHTML={{ __html: prefix }} />
+          <div className="text-gray-300 text-sm leading-relaxed mb-3 prose prose-invert prose-sm max-w-none" dir="rtl" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(prefix) }} />
         )}
 
         {hasBoth ? (

@@ -8,6 +8,10 @@
  * GET /api/cron/stale-alerts?key=SECRET
  */
 
+function escapeTg(text: string): string {
+  return text.replace(/([*_`\[\]()~>#+\-=|{}.!\\])/g, '\\$1')
+}
+
 interface Env {
   DB: D1Database
   TELEGRAM_BOT_TOKEN?: string
@@ -103,8 +107,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       lines.push(`📌 *${rule.label}* (${items.length} — יותר מ-${rule.days} ימים):`)
       for (const { msg, age } of items.slice(0, 5)) {
         const preview = msg.message.length > 50 ? msg.message.slice(0, 50) + '…' : msg.message
-        lines.push(`  • *${msg.name}* (${msg.email}) — ${age} ימים`)
-        if (preview) lines.push(`    _${preview}_`)
+        lines.push(`  • *${escapeTg(msg.name)}* (${escapeTg(msg.email)}) — ${age} ימים`)
+        if (preview) lines.push(`    _${escapeTg(preview)}_`)
       }
       if (items.length > 5) {
         lines.push(`  ...ועוד ${items.length - 5}`)

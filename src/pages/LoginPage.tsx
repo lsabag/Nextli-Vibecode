@@ -45,7 +45,8 @@ export default function LoginPage() {
         const res = await fetch('/api/auth/change-password', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, currentPassword: password, newPassword }),
+          credentials: 'include',
+          body: JSON.stringify({ currentPassword: password, newPassword }),
         })
         const data = await res.json() as { error?: string }
         if (!res.ok) throw new Error(data.error || 'שגיאה')

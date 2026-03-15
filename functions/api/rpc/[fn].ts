@@ -1,7 +1,10 @@
 /**
  * RPC handler for Cloudflare Pages Functions.
  * Supports named remote procedure calls via /api/rpc/:fn
+ * All RPC functions require admin authentication.
  */
+
+import { requireAdmin } from '../_auth'
 
 interface Env {
   DB: D1Database;
@@ -9,6 +12,10 @@ interface Env {
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
+  // All RPC functions require admin
+  const auth = await requireAdmin(context.request, context.env.JWT_SECRET);
+  if (auth instanceof Response) return auth;
+
   const fn = context.params.fn as string;
   const db = context.env.DB;
 

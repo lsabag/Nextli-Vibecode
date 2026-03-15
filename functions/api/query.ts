@@ -1,7 +1,15 @@
 /**
  * Generic query handler for Cloudflare Pages Functions.
  * Translates the frontend QuerySpec into parameterized SQL for D1.
+ *
+ * Access control:
+ * - PUBLIC_READ: tables anyone can SELECT (landing page, public data)
+ * - Any write operation: requires authentication
+ * - ADMIN_ONLY: tables only admin can read/write
+ * - PUBLIC_INSERT: tables anyone can INSERT into (waitlist)
  */
+
+import { getAuth, type AuthPayload } from './_auth'
 
 interface Env {
   DB: D1Database;
@@ -29,6 +37,71 @@ const ALLOWED_TABLES = new Set([
   'intake_questions',
   'content_templates',
 ]);
+
+// ── Access Control ─────────────────────────────────────────────────────────
+
+/** Tables anyone can read without authentication */
+const PUBLIC_READ = new Set([
+  'courses', 'course_sessions', 'system_settings',
+  'additional_courses', 'team_members', 'waitlist',
+  'wizard_steps', 'prep_checklist', 'intake_questions',
+  'session_content', 'prompts_library',
+]);
+
+/** Tables anyone can INSERT into without authentication */
+const PUBLIC_INSERT = new Set(['waitlist']);
+
+/** Tables only admin can access (read or write) */
+const ADMIN_ONLY = new Set(['user_profiles', 'contact_messages', 'content_templates']);
+
+/**
+ * Check if the operation is allowed for the given auth state.
+ * Returns null if allowed, or an error Response if denied.
+ */
+function checkAccess(
+  spec: { table: string; operation: string },
+  auth: AuthPayload | null,
+): Response | null {
+  const { table, operation } = spec;
+  const isAdmin = auth?.role === 'admin';
+
+  // Admin can do everything
+  if (isAdmin) return null;
+
+  // Admin-only tables: deny all access to non-admins
+  if (ADMIN_ONLY.has(table)) {
+    if (!auth) return Response.json({ error: 'Authentication required' }, { status: 401 });
+    return Response.json({ error: 'Admin access required' }, { status: 403 });
+  }
+
+  // SELECT on public tables: allow without auth
+  if (operation === 'select' && PUBLIC_READ.has(table)) {
+    return null;
+  }
+
+  // Public INSERT (e.g. waitlist signup)
+  if (operation === 'insert' && PUBLIC_INSERT.has(table)) {
+    return null;
+  }
+
+  // Everything else requires authentication
+  if (!auth) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  // Authenticated users can read all allowed tables
+  if (operation === 'select') return null;
+
+  // Authenticated users can write to their own data tables
+  // (student_notes, content_progress, wizard_answers, session_feedback, notifications)
+  // DELETE is admin-only (except own data — enforced below)
+  if (operation === 'delete') {
+    return Response.json({ error: 'Admin access required for delete operations' }, { status: 403 });
+  }
+
+  // Insert/update/upsert: allowed for authenticated users
+  return null;
+}
 
 // Validate column/table names to prevent injection (only allow alphanumeric + underscore)
 function safeName(name: string): string {
@@ -360,6 +433,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         { status: 400 }
       );
     }
+
+    // ── Authentication & Authorization ──────────────────────────────────
+    const auth = await getAuth(context.request, context.env.JWT_SECRET);
+    const denied = checkAccess(spec, auth);
+    if (denied) return denied;
 
     const db = context.env.DB;
     let data: unknown[];
